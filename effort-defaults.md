@@ -49,7 +49,7 @@ S = scales with extra solutions. F = fixed.
 | --- | ---: | --- | --- |
 | Upgrades & release testing | 30 | S | Plan, run and test each new version across dev, test and production. |
 | Patching & hotfixes | 12 | S | Apply fixes BMC releases between upgrades. |
-| Environment refreshes | 8 | S | Rebuild dev, test and production from a clean copy. |
+| Environment refreshes | 8 | S | Copy production data into test systems so testing is realistic. |
 
 ### Software stack
 
@@ -141,9 +141,11 @@ Tasks with no source in the list below are marked on the page: "Estimate, edit t
 
 - Engineer day rate. Cooper Fitch, UAE Salary Guide 2025. We use AED 30,000 a month × 12 × 1.25 loading ÷ 230 days, rounded to AED 1,950 a day (about US$530). The 1.25 loading is ours. https://cooperfitch.ae/wp-content/uploads/2024/12/Salary-Guide-UAE-2025-Cooper-Fitch.pdf
 - Upgrades. BMC Helix On-Prem Container Upgrade Service. Estimated duration 6 to 10 weeks for one environment. The 30 days is staff effort, not that calendar window. https://www.helixops.ai/it-services/success-catalog/bmc-helix-on-premise-container-upgrade-service.html
+- BMC Remedy, Planning an upgrade. https://docs.helixops.ai/bin/Service-Management/On-Premises-Deployment/Remedy-Deployment/brid2002/Planning/Planning-an-upgrade/
 - Kubernetes release cycle. A new release about three times a year. https://kubernetes.io/releases/
 - Spectro Cloud, State of Production Kubernetes 2025. The 20 days for Kubernetes/OpenShift is an estimate of the work to keep it healthy. https://www.spectrocloud.com/state-of-kubernetes-2025
 - TKU. BMC publishes Technology Knowledge Updates on a monthly schedule. The 10 days is an estimate of the work to apply them. https://docs.helixops.ai/bin/IT-Operations-Management/Discovery/BMC-Discovery/Configipedia/Technology-Knowledge-Updates-TKU/Schedule-and-Roadmap/
+- BMC knowledge article 000314074. Best practices for Technology Knowledge Updates. https://selfservice.bmc.com/casemgmt/sc_KnowledgeArticle?sfdcid=000314074
 - Penetration testing. PCI DSS expects a test at least once a year. The 4 days is an estimate of the time to manage that test. https://listings.pcisecuritystandards.org/documents/Penetration-Testing-Guidance-v1_1.pdf
 - Availability. Helix subscription services, 99.9% in a month. Planned maintenance is excluded. https://www.helixops.ai/content/dam/bmc/corporate/service-level-agreement.pdf
 - Recovery. A 15-minute recovery point, and a 4-hour recovery time, unless the contract says otherwise. https://docs.helixops.ai/bin/Helix-Common-Services/Other/BMC-Helix-Subscriber-Information/helixsubscriber/Operations/Data-centers-and-architecture/Business-continuity-and-disaster-recovery/

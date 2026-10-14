@@ -177,7 +177,7 @@
       .result { background: #fff; color: var(--navy); border: 1px solid var(--navy); box-shadow: none; padding: 0.35rem 0.5rem; }
       .result h2, .big, .second, .infra-line, .cash-note, .five, .buys, .fine { color: var(--navy); }
       .big { font-size: 1rem; margin-bottom: 0.15rem; }
-      .second, .infra-line, .cash-note, .five, .buys { font-size: 0.72rem; margin-bottom: 0.12rem; }
+      .second, .infra-line, .cash-note, .five, .buys, .print-inputs { font-size: 0.72rem; margin-bottom: 0.12rem; }
       .result-stick { position: static !important; margin: 0; padding: 0; background: transparent; box-shadow: none; border-radius: 0; }
       #costChart, #printChart { display: none !important; }
       .chart-print { display: block !important; width: 100%; height: auto; }
@@ -227,6 +227,7 @@
       <p class="five" id="fiveLine" hidden></p>
       <p class="buys" id="buysLine" hidden>What that buys: upgrades done for you, a 99.9% availability commitment, and UAE data residency.</p>
       <p class="fine" id="fiveNote" hidden>Five straight years. Staff time you still do, plus your quote. No yearly rise is included.</p>
+      <p class="print-only print-inputs" id="printInputs"></p>
       <div class="actions no-print">
         <button type="button" id="copyLinkBtn">Copy link</button>
         <button type="button" id="printBtn" class="ghost">Print one page</button>
@@ -299,9 +300,9 @@
         <p>A public source is linked. Everything else is an estimate, edit to match your team.</p>
         <ol>
           <li>Engineer day rate. Cooper Fitch, UAE Salary Guide 2025. We use AED 30,000 a month × 12 × 1.25 loading ÷ 230 days, rounded to AED 1,950 a day (about US$530). The 1.25 is ours. <a href="https://cooperfitch.ae/wp-content/uploads/2024/12/Salary-Guide-UAE-2025-Cooper-Fitch.pdf" target="_blank" rel="noopener">Cooper Fitch PDF</a></li>
-          <li>Upgrades. BMC Helix On-Prem Container Upgrade Service. Estimated duration 6 to 10 weeks for one environment. The 30 days is staff effort, not that calendar window. <a href="https://www.helixops.ai/it-services/success-catalog/bmc-helix-on-premise-container-upgrade-service.html" target="_blank" rel="noopener">On-Prem Container Upgrade Service</a></li>
+          <li>Upgrades. BMC Helix On-Prem Container Upgrade Service. Estimated duration 6 to 10 weeks for one environment. The 30 days is staff effort, not that calendar window. <a href="https://www.helixops.ai/it-services/success-catalog/bmc-helix-on-premise-container-upgrade-service.html" target="_blank" rel="noopener">On-Prem Container Upgrade Service</a>. BMC Remedy planning guide for an upgrade. <a href="https://docs.helixops.ai/bin/Service-Management/On-Premises-Deployment/Remedy-Deployment/brid2002/Planning/Planning-an-upgrade/" target="_blank" rel="noopener">Planning an upgrade</a></li>
           <li>Kubernetes release cycle. A new release about three times a year. <a href="https://kubernetes.io/releases/" target="_blank" rel="noopener">kubernetes.io/releases</a>. Spectro Cloud, State of Production Kubernetes 2025. The 20 days is an estimate. <a href="https://www.spectrocloud.com/state-of-kubernetes-2025" target="_blank" rel="noopener">Spectro Cloud 2025</a></li>
-          <li>TKU. BMC publishes Technology Knowledge Updates on a monthly schedule. The 10 days is an estimate of the work to apply them. <a href="https://docs.helixops.ai/bin/IT-Operations-Management/Discovery/BMC-Discovery/Configipedia/Technology-Knowledge-Updates-TKU/Schedule-and-Roadmap/" target="_blank" rel="noopener">TKU schedule</a></li>
+          <li>TKU. BMC publishes Technology Knowledge Updates on a monthly schedule. The 10 days is an estimate of the work to apply them. <a href="https://docs.helixops.ai/bin/IT-Operations-Management/Discovery/BMC-Discovery/Configipedia/Technology-Knowledge-Updates-TKU/Schedule-and-Roadmap/" target="_blank" rel="noopener">TKU schedule</a>. Best practice is in BMC knowledge article 000314074. <a href="https://selfservice.bmc.com/casemgmt/sc_KnowledgeArticle?sfdcid=000314074" target="_blank" rel="noopener">KB 000314074</a></li>
           <li>Penetration testing. PCI DSS expects a test at least once a year. The 4 days is an estimate of the time to manage that test. <a href="https://listings.pcisecuritystandards.org/documents/Penetration-Testing-Guidance-v1_1.pdf" target="_blank" rel="noopener">PCI penetration testing guidance (PDF)</a></li>
           <li>Availability. 99.9% in a month. Planned maintenance does not count as downtime. <a href="https://www.helixops.ai/content/dam/bmc/corporate/service-level-agreement.pdf" target="_blank" rel="noopener">BMC Helix service level agreement (PDF)</a></li>
           <li>Recovery. A 15-minute recovery point, and a 4-hour recovery time, unless the contract says otherwise. <a href="https://docs.helixops.ai/bin/Helix-Common-Services/Other/BMC-Helix-Subscriber-Information/helixsubscriber/Operations/Data-centers-and-architecture/Business-continuity-and-disaster-recovery/" target="_blank" rel="noopener">Business continuity and disaster recovery</a></li>
@@ -351,7 +352,7 @@
         { id: "ao", name: "Application operations", tasks: [
           row("ao1", "Upgrades & release testing", 30, "Plan, run and test each new version across dev, test and production.", true, true),
           row("ao2", "Patching & hotfixes", 12, "Apply fixes BMC releases between upgrades.", true, false),
-          row("ao3", "Environment refreshes", 8, "Rebuild dev, test and production from a clean copy.", true, false)
+          row("ao3", "Environment refreshes", 8, "Copy production data into test systems so testing is realistic.", true, false)
         ] },
         { id: "ss", name: "Software stack", tasks: [
           row("ss1", "Kubernetes/OpenShift", 20, "Keep the container platform under Helix patched and healthy.", false, true),
@@ -619,6 +620,9 @@
           const gap = on5 - saas5;
           five.hidden = false;
           fiveNote.hidden = false;
+          fiveNote.textContent = state.lic != null
+            ? "Five straight years. The on-prem side includes your licence. Staff time you still do, plus your quote. No yearly rise is included."
+            : "Five straight years. Staff time you still do, plus your quote. No yearly rise is included.";
           if (gap >= 0) {
             five.textContent = "5-year cost: on-prem " + fmt(on5) + ", SaaS " + fmt(saas5) + ". SaaS saves about " + fmt(gap) + ".";
             buys.hidden = true;
@@ -638,6 +642,12 @@
             ? "With one solution, scaling tasks are not lifted."
             : "Each extra solution adds half of the scaling days again. You ticked " + model.n + " solutions.");
 
+        const picked = SOLUTIONS.filter(function (sol) { return state.sol.indexOf(sol.id) >= 0; }).map(function (sol) { return sol.name; });
+        $("printInputs").textContent = "Inputs: " + (picked.length ? picked.join(", ") : "none")
+          + ". Servers: " + (state.srv > 0 ? String(state.srv) : "none")
+          + ". SaaS quote: " + (state.quote == null ? "none" : fmt(state.quote) + " a year")
+          + ". On-prem licence: " + (state.lic == null ? "none" : fmt(state.lic) + " a year")
+          + ". Currency: " + (state.cur === "usd" ? "US$" : "AED") + ".";
         $("printDate").textContent = "Printed " + new Date().toISOString().slice(0, 10);
         $("printUrl").textContent = LIVE;
         drawQR($("printQR"));
