@@ -188,6 +188,16 @@
     a.src { font-size: 0.68rem; font-weight: 700; color: var(--accent-2); }
     .money-row, .split { display: flex; align-items: center; gap: 0.4rem; }
     .prefix { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); min-width: 2.4rem; }
+    .check-row {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      font-size: 0.84rem;
+      font-weight: 650;
+      color: var(--navy);
+    }
+    .check-row input { width: 1.15rem; height: 1.15rem; margin-top: 0.12rem; flex: 0 0 auto; }
     input[type="number"] {
       width: 100%;
       border: 1px solid var(--line);
@@ -225,7 +235,7 @@
       letter-spacing: -0.02em;
       line-height: 1.25;
     }
-    .range-line, .fee-note, .be-line { margin: 0 0 0.55rem; font-size: 0.88rem; color: #d7e2f2; }
+    .range-line, .fee-note, .be-line, .people-note { margin: 0 0 0.55rem; font-size: 0.88rem; color: #d7e2f2; }
     .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.2rem 0 0.7rem; }
     .kpis > div { background: rgba(255,255,255,0.08); border-radius: 10px; padding: 0.55rem 0.65rem; }
     .kpis span { display: block; font-size: 0.72rem; color: #c9d6e8; }
@@ -252,7 +262,8 @@
       font-size: 0.95rem;
       color: var(--navy);
     }
-    .chart-box { height: 250px; margin-top: 0.35rem; }
+    .chart-box { position: relative; height: 250px; margin-top: 0.35rem; }
+    .chart-print { display: none; }
     .fine { font-size: 0.78rem; color: var(--muted); margin: 0.45rem 0 0; }
     .fte-card { border-left: 3px solid var(--good); }
     .fte-card strong { color: var(--good); }
@@ -372,15 +383,17 @@
         padding: 0.35rem 0.5rem;
         border-radius: 8px;
       }
-      .results-card h2, .headline, .range-line, .fee-note, .be-line, .kpis span { color: var(--navy); }
+      .results-card h2, .headline, .range-line, .fee-note, .be-line, .people-note, .kpis span { color: var(--navy); }
       .headline { font-size: 1rem; margin-bottom: 0.15rem; }
-      .range-line, .fee-note, .be-line { font-size: 0.68rem; margin-bottom: 0.15rem; }
+      .range-line, .fee-note, .be-line, .people-note { font-size: 0.68rem; margin-bottom: 0.15rem; }
       .kpis { margin: 0.1rem 0 0.2rem; gap: 0.25rem; }
       .kpis > div { background: #f5f7fb; padding: 0.2rem 0.35rem; }
       .kpis b { font-size: 0.75rem; }
       .buys { font-size: 0.68rem; }
       .buys li { margin: 0.05rem 0; }
-      .chart-box { height: 72px; }
+      #costChart { display: none !important; }
+      .chart-print { display: block !important; width: 100%; height: 72px; object-fit: contain; object-position: left center; }
+      .chart-box { height: 72px; overflow: hidden; }
       .risk { margin-bottom: 0.1rem; padding: 0.15rem 0.35rem; }
       .print-foot { margin-top: 0; }
       .buys { margin: 0.05rem 0 0.1rem; }
@@ -469,6 +482,11 @@
               <span class="label-row">Person-days each upgrade <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 120 person-days for one upgrade of the solutions you ticked. Not per solution. Our own careful estimate.">i</span></span>
               <input id="ud" type="number" min="0" step="1" inputmode="decimal" value="120" />
             </label>
+            <div class="check-row">
+              <input id="ot" type="checkbox" />
+              <label for="ot">We use contractors or overtime for upgrades</label>
+              <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Off by default. The team you already pay does the upgrades, so those days are staff time, not extra cash. Tick this to add the upgrade cost as cash.">i</span>
+            </div>
             <label class="field">
               <span class="label-row">Yearly SaaS subscription (optional) <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Leave blank to see the year-1 fee where the 5-year totals match. This is not a price. If you type a fee, it is your figure for year 1. Later years rise at the SaaS rate (default 5% a year).">i</span></span>
               <span class="money-row"><span class="prefix" data-prefix>AED</span><input id="sub" type="number" min="0" step="1" inputmode="decimal" placeholder="Leave blank" /></span>
@@ -486,10 +504,7 @@
         <div class="buys" id="buys" hidden>
           <ul>
             <li id="buyUp">Upgrades done for you. This model leaves your team with 20% of the upgrade work.</li>
-            <li>A 99.9% monthly availability commitment for Helix subscription services. Planned maintenance is excluded.</li>
-            <li>A 15-minute recovery point. The published recovery time is 4 hours.</li>
-            <li>ISO 27001 and a yearly SOC 2 Type II examination.</li>
-            <li>UAE data residency. For a UAE cloud subscription, backups are stored in Abu Dhabi. Data stays in the country you select.</li>
+            <li>The rest is listed under Risk you stop carrying. It is not turned into money.</li>
           </ul>
         </div>
         <p class="fee-note" id="feeNote"></p>
@@ -499,6 +514,7 @@
         </div>
         <p class="range-line" id="rangeLine"></p>
         <p class="be-line" id="beLine"></p>
+        <p class="people-note" id="peopleNote">People savings only become cash if roles move to other work or are not backfilled.</p>
         <div class="actions no-print">
           <button type="button" id="copyLinkBtn">Copy link</button>
           <button type="button" id="printBtn">Print one page</button>
@@ -509,7 +525,10 @@
       <section class="card chart-card" aria-label="Cumulative cost chart">
         <h3>Cumulative cost</h3>
         <p class="fine" id="chartNote">Likely case. The gold line is the break-even month.</p>
-        <div class="chart-box"><canvas id="costChart" aria-label="Cumulative on-prem and SaaS cost over 60 months"></canvas></div>
+        <div class="chart-box">
+          <canvas id="costChart" aria-label="Cumulative on-prem and SaaS cost over 60 months"></canvas>
+          <img id="chartPrint" class="chart-print" alt="Cumulative on-prem and SaaS cost over 5 years" />
+        </div>
         <p class="fine" id="chartFallback" hidden>The chart did not load. The totals above are still valid.</p>
       </section>
 
@@ -541,7 +560,7 @@
             <tbody></tbody>
           </table>
         </div>
-        <p class="fine">People cost is cash inside the totals. The FTE line is that same time, not extra savings. Risk items are not in this table.</p>
+        <p class="fine">People cost is cash inside the totals. The FTE line is that same time, not extra savings. Upgrade days stay in staff time unless you tick contractors or overtime. Risk items are not in this table.</p>
       </section>
 
       <section class="risk" aria-label="Risk you stop carrying">
@@ -556,8 +575,8 @@
         <ul class="print-method">
           <li>On-prem costs rise 3% a year. The SaaS fee rises 5% a year. Servers and people you still run rise at the on-prem rate.</li>
           <li>With SaaS: 80% less infrastructure, 40% less ops effort, 80% less upgrade effort.</li>
-          <li>Year 1 adds a one-time move, 6 months running both, and 20% contingency.</li>
-          <li>Staff time is already inside the totals. Risk items are not added to the savings.</li>
+          <li>Year 1 adds a one-time move, 6 months running both, and 20% contingency on the move and the overlap only.</li>
+          <li>Upgrade days are staff time unless you tick contractors or overtime. Risk items are not added to the savings.</li>
         </ul>
         <p class="print-sources">Sources: Cooper Fitch UAE Salary Guide 2025; BMC Helix SLA, recovery, compliance, and service-location pages; Uptime Institute Annual Outage Analysis 2025. Server cost, cuts, and the move cost are our own careful estimates.</p>
         <p class="print-disc">Personal project. Not a BMC Helix tool. My own views. Illustrative estimates only.</p>
@@ -576,14 +595,14 @@
     <details class="method" id="assumptions" open>
       <summary>See assumptions</summary>
       <div class="body">
-        <p>You can edit these. They are cautious examples, not a quote. Money fields follow the currency at the top.</p>
+        <p>You can edit these. They are cautious examples, not a quote. Money fields follow the currency at the top. Server running cost (default AED 30,000 per server per year) is power, space, support, and software licences. It excludes the hardware purchase. Hardware refresh is a separate line, paid in the refresh year (default year 5).</p>
         <div class="assumptions">
           <label class="field">
-            <span class="label-row">Server cost per year <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Default AED 30,000 per server per year. Includes power, space, and the licences you run yourself. The SaaS fee is separate. Our own careful estimate. Not a vendor price.">i</span></span>
+            <span class="label-row">Server running cost per year <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Default AED 30,000 per server per year. Running cost: power, space, support, software licences. This excludes the hardware purchase. Hardware refresh is the next field. Our own careful estimate. Not a vendor price.">i</span></span>
             <span class="money-row"><span class="prefix" data-prefix>AED</span><input id="sc" type="number" min="0" step="1" inputmode="decimal" value="30000" /></span>
           </label>
           <label class="field">
-            <span class="label-row">Hardware refresh per server <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default AED 30,000 per server, equal to one year of server cost. Paid in the refresh year. Our own careful estimate.">i</span></span>
+            <span class="label-row">Hardware refresh per server <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Default AED 30,000 per server. This is the hardware purchase, separate from the yearly running cost. Paid in the refresh year (default year 5). Our own careful estimate.">i</span></span>
             <span class="money-row"><span class="prefix" data-prefix>AED</span><input id="hw" type="number" min="0" step="1" inputmode="decimal" value="30000" /></span>
           </label>
           <label class="field">
@@ -591,7 +610,7 @@
             <input id="ry" type="number" min="1" step="1" inputmode="decimal" value="5" />
           </label>
           <label class="field">
-            <span class="label-row">On-prem cost rise, % a year <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 3% a year on servers, people, upgrades, and hardware refresh. Also used for the servers and people you still run with SaaS. Our own careful estimate.">i</span></span>
+            <span class="label-row">On-prem cost rise, % a year <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Default 3% a year on server running cost, people, and hardware refresh. Upgrade cash rises at this rate only if you tick contractors or overtime. Also used for the servers and people you still run with SaaS. Our own careful estimate.">i</span></span>
             <input id="oi" type="number" min="0" max="100" step="0.1" inputmode="decimal" value="3" />
           </label>
           <label class="field">
@@ -615,15 +634,15 @@
             <span class="money-row"><span class="prefix" data-prefix>AED</span><input id="mig" type="number" min="0" step="1" inputmode="decimal" value="250000" /></span>
           </label>
           <label class="field">
-            <span class="label-row">Months running both <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 6 months. For those months you still pay the on-prem servers and team, on top of the reduced SaaS run-cost. Our own careful estimate.">i</span></span>
+            <span class="label-row">Months running both <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Default 6 months. For those months you still pay the on-prem server running cost and team, on top of the reduced SaaS run-cost. Our own careful estimate.">i</span></span>
             <input id="dual" type="number" min="0" max="12" step="1" inputmode="decimal" value="6" />
           </label>
           <label class="field">
-            <span class="label-row">Year-1 contingency, % <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 20% of all year-1 SaaS cost, including the fee, the overlap, and the move. Later years have no contingency. Our own careful estimate.">i</span></span>
+            <span class="label-row">Year-1 contingency, % <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Default 20% of the one-time move and of the months you run both. Not applied to the subscription or to normal running cost. Later years have no contingency. Our own careful estimate.">i</span></span>
             <input id="ctg" type="number" min="0" max="100" step="1" inputmode="decimal" value="20" />
           </label>
           <label class="field">
-            <span class="label-row">Working days in a year <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 230. Used only to turn upgrade person-days into a cost. Our own careful estimate.">i</span></span>
+            <span class="label-row">Working days in a year <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Default 230. Used to turn upgrade person-days into cash only when you tick contractors or overtime. Our own careful estimate.">i</span></span>
             <input id="wd" type="number" min="1" step="1" inputmode="decimal" value="230" />
           </label>
         </div>
@@ -642,7 +661,7 @@
           <li>Data location. Data stays in the country of the service location you select. Backups for a UAE OCI subscription are stored in Abu Dhabi (UAE Central). Confirm the site in your contract. <a href="https://docs.helixops.ai/bin/Helix-Common-Services/Other/BMC-Helix-Subscriber-Information/helixsubscriber/Operations/Data-centers-and-architecture/Service-locations/" target="_blank" rel="noopener">Service locations</a></li>
           <li>Outage context, not a Helix figure. Uptime Institute, Annual Outage Analysis 2025: 54% of respondents said their most recent significant, serious, or severe outage cost more than US$100,000, and one in five said more than US$1 million. <a href="https://uptimeinstitute.com/uptime_assets/d7c049ef5b02a6e0a15540a3e5cb8fbf742c7fa54a1af6caeaaab32b7c15d443-GA-2025-05-annual-outage-analysis.pdf" target="_blank" rel="noopener">Uptime executive summary (PDF)</a> · <a href="https://uptimeinstitute.com/about-ui/press-releases/uptime-announces-annual-outage-analysis-report-2025" target="_blank" rel="noopener">Press release</a></li>
         </ol>
-        <p>Our own careful estimates, with no public price: servers per solution, yearly server cost, hardware refresh, the 3% and 5% rises, the 80/40/80 effort cuts, migration cost, months running both, year-1 contingency, upgrade timing and days, working days, and the default team size.</p>
+        <p>Our own careful estimates, with no public price: servers per solution, yearly server running cost (this excludes the hardware purchase), hardware refresh, the 3% and 5% rises, the 80/40/80 effort cuts, migration cost, months running both, year-1 contingency, upgrade timing and days, working days, and the default team size.</p>
       </div>
     </details>
 
@@ -685,7 +704,8 @@
         mig: 250000,
         dual: 6,
         ctg: 20,
-        wd: 230
+        wd: 230,
+        ot: false
       };
       const MONEY_KEYS = { eng: 1, sub: 1, sc: 1, hw: 1, mig: 1 };
       const LIMITS = {
@@ -785,7 +805,7 @@
           const infra = servers * s.sc * gO;
           const people = s.fte * s.eng * gO;
           const upHit = upYears.indexOf(y) >= 0;
-          const upgrade = upHit ? s.ud * (s.eng / wd) * gO : 0;
+          const upgrade = s.ot && upHit ? s.ud * (s.eng / wd) * gO : 0;
           const refHit = refYears.indexOf(y) >= 0;
           const refresh = refHit ? servers * s.hw * gO : 0;
           const infraS = infra * infraKeep;
@@ -818,8 +838,8 @@
           if (sUp) ms[11] += sUp;
           if (sRef) ms[11] += sRef;
           if (mig) ms[0] += mig;
-          const pre = ms.reduce((a, b) => a + b, 0);
-          const cty = y === 1 ? pre * cont : 0;
+          const overlapYear = extraInfra + extraPeople + extraUp + extraRef;
+          const cty = y === 1 ? (mig + overlapYear) * cont : 0;
           if (cty) ms[0] += cty;
 
           parts.onInfra += infra;
@@ -830,7 +850,7 @@
           parts.sPeople += peopleS;
           parts.sUpgrade += upgradeS;
           parts.sRefresh += refreshS;
-          parts.overlap += extraInfra + extraPeople + extraUp + extraRef;
+          parts.overlap += overlapYear;
           parts.mig += mig;
           parts.cont += cty;
           parts.sub += sub;
@@ -867,13 +887,17 @@
       }
 
       function staff(s, upYears) {
-        const wd = Math.max(1, s.wd);
         const events = upYears.length;
         const daysOn = events * s.ud;
         const daysSaas = events * s.ud * (1 - s.uc / 100);
         const fteOps = s.fte * (s.oc / 100);
-        const fteUp = ((daysOn - daysSaas) / 5) / wd;
-        return { fte: fteOps + fteUp, fteOps: fteOps, daysOn: daysOn, daysSaas: daysSaas };
+        return {
+          fteOps: fteOps,
+          daysOn: daysOn,
+          daysSaas: daysSaas,
+          daysOnYear: daysOn / 5,
+          daysSaasYear: daysSaas / 5
+        };
       }
 
       function evaluate() {
@@ -896,10 +920,6 @@
           main: main,
           people: people
         };
-      }
-
-      function bandOverlap(onprem, saas) {
-        return onprem * 0.8 <= saas * 1.2 && saas * 0.8 <= onprem * 1.2;
       }
 
       function paintSolutions() {
@@ -936,6 +956,7 @@
           showNum(id, state[id]);
         });
         showNum("sub", state.sub);
+        $("ot").checked = !!state.ot;
       }
 
       function pullNumber(id) {
@@ -963,6 +984,7 @@
           const n = pullNumber("sub");
           if (n != null) state.sub = n;
         }
+        state.ot = $("ot").checked;
       }
 
       function near(a, b) {
@@ -979,6 +1001,7 @@
         parts.push("uy=" + (Math.round(state.uy * 1000) / 1000));
         parts.push("ud=" + (Math.round(state.ud * 1000) / 1000));
         if (state.sub != null) parts.push("sub=" + Math.round(state.sub));
+        if (state.ot) parts.push("ot=1");
         const opt = [
           ["sc", state.sc], ["hw", state.hw], ["ry", state.ry], ["oi", state.oi], ["si", state.si],
           ["ic", state.ic], ["oc", state.oc], ["uc", state.uc], ["mig", state.mig],
@@ -1055,6 +1078,7 @@
           const lim = LIMITS[id];
           next[id] = hashNum(data[id], next[id], lim[0], lim[1]);
         });
+        next.ot = data.ot === "1";
         state = next;
       }
 
@@ -1089,7 +1113,7 @@
         }
       }
 
-      function renderChart(main, saasName) {
+      function renderChart(main, saasName, showBe) {
         const canvas = $("costChart");
         const fallback = $("chartFallback");
         if (!window.Chart) {
@@ -1097,16 +1121,13 @@
           return;
         }
         fallback.hidden = true;
-        const labels = [];
-        for (let i = 1; i <= 60; i++) labels.push(i);
-        const onData = main.cumO.map(toDisp);
-        const saasData = main.cumS.map(toDisp);
-        const axisMillion = Math.max.apply(null, onData.concat(saasData)) >= 1000000;
+        const onData = main.cumO.map((y, i) => ({ x: i + 1, y: toDisp(y) }));
+        const saasData = main.cumS.map((y, i) => ({ x: i + 1, y: toDisp(y) }));
+        const axisMillion = Math.max.apply(null, main.cumO.concat(main.cumS).map(toDisp)) >= 1000000;
         if (chart) chart.destroy();
         chart = new Chart(canvas, {
           type: "line",
           data: {
-            labels: labels,
             datasets: [
               { label: "On-prem", data: onData, borderColor: "#0b1f3a", backgroundColor: "transparent", pointRadius: 0, borderWidth: 2, tension: 0 },
               { label: saasName, data: saasData, borderColor: "#2f6fed", backgroundColor: "transparent", pointRadius: 0, borderWidth: 2, tension: 0 }
@@ -1121,20 +1142,24 @@
               legend: { position: "top", labels: { boxWidth: 10, font: { size: 11 }, padding: 8 } },
               tooltip: {
                 callbacks: {
-                  title: (items) => "Month " + items[0].label,
+                  title: (items) => "Month " + items[0].parsed.x,
                   label: (item) => item.dataset.label + ": " + fmtThousand(state.cur === "usd" ? item.parsed.y * FX : item.parsed.y)
                 }
               },
-              breakevenLine: { month: main.be }
+              breakevenLine: { month: showBe ? main.be : null }
             },
             scales: {
               x: {
-                title: { display: true, text: "Month", font: { size: 11 } },
+                type: "linear",
+                min: 0,
+                max: 60,
                 ticks: {
-                  maxTicksLimit: 6,
-                  callback: function (value) {
-                    const m = Number(this.getLabelForValue(value));
-                    return m % 12 === 0 ? "Year " + (m / 12) : "";
+                  autoSkip: false,
+                  maxRotation: 0,
+                  stepSize: 12,
+                  callback: (value) => {
+                    const v = Math.round(Number(value));
+                    return v > 0 && v % 12 === 0 ? "Year " + (v / 12) : "";
                   }
                 }
               },
@@ -1153,7 +1178,7 @@
               const xScale = c.scales.x;
               const yScale = c.scales.y;
               if (!xScale || !yScale) return;
-              const x = xScale.getPixelForValue(opts.month - 1);
+              const x = xScale.getPixelForValue(opts.month);
               const g = c.ctx;
               g.save();
               g.beginPath();
@@ -1167,6 +1192,16 @@
             }
           }]
         });
+        paintPrintChart();
+      }
+
+      function paintPrintChart() {
+        const img = $("chartPrint");
+        if (!chart || !img) return;
+        try {
+          const url = chart.canvas.toDataURL("image/png");
+          if (url && url.length > 32) img.src = url;
+        } catch (e) {}
       }
 
       function render() {
@@ -1181,7 +1216,7 @@
         $("solNote").textContent = state.sol.length
           ? (servers + " servers (" + state.sol.length + " × " + trimNum(state.srv) + "). Team " + trimNum(state.fte) + " FTE for this set. Each upgrade is " + trimNum(state.ud) + " person-days for this set.")
           : "No solution is ticked, so the server count is zero. Team size and upgrade days still count if you left them filled.";
-        $("upNote").textContent = "Upgrades in this 5-year view: " + yearList(upYears) + ". Hardware refresh: " + yearList(refYears) + ".";
+        $("upNote").textContent = "Upgrades in this 5-year view: " + yearList(upYears) + ". " + (state.ot ? "Counted as cash, because you ticked contractors or overtime." : "Counted as staff time, not extra cash.") + " Hardware refresh: " + yearList(refYears) + ".";
 
         const headline = $("headline");
         const feeNote = $("feeNote");
@@ -1233,26 +1268,44 @@
           buys.hidden = true;
         }
 
-        const overlap = bandOverlap(main.onprem, main.saas);
         if (model.blank && model.feeStar != null) {
           rangeLine.textContent = "The two 5-year totals match because this fee was chosen to make them match. Each total can still move about 20% either way.";
-        } else if (overlap) {
-          rangeLine.textContent = "Each total has a ±20% range. Those ranges overlap, so treat a small gap as too close to call.";
         } else {
-          rangeLine.textContent = "Each total has a ±20% range. Those ranges do not overlap, so the direction is clearer. Still an estimate.";
+          const low = save - Math.abs(save) * 0.2;
+          const high = save + Math.abs(save) * 0.2;
+          const crosses = low < -0.5 && high > 0.5;
+          if (crosses || Math.abs(save) < 0.5) {
+            rangeLine.textContent = "The 5-year difference is about zero. A ±20% range on that difference crosses zero. Too close to call.";
+          } else if (save > 0) {
+            rangeLine.textContent = "The 5-year difference is about " + fmtMillion(save) + " less with SaaS. A ±20% range on that difference is " + fmtMillion(low) + " to " + fmtMillion(high) + " less.";
+          } else {
+            rangeLine.textContent = "The 5-year difference is about " + fmtMillion(-save) + " more with SaaS. A ±20% range on that difference is " + fmtMillion(-high) + " to " + fmtMillion(-low) + " more.";
+          }
         }
 
-        if (main.be == null) {
+        if (model.blank) {
+          beLine.hidden = true;
+          beLine.textContent = "";
+        } else if (main.be == null) {
+          beLine.hidden = false;
           beLine.textContent = "SaaS does not cost less within 5 years (60 months).";
         } else if (main.be === 1) {
+          beLine.hidden = false;
           beLine.textContent = "Break-even month: 1. SaaS costs less from the first month in this likely case.";
         } else {
+          beLine.hidden = false;
           beLine.textContent = "Break-even month: " + main.be + ". That is the first month when the running SaaS total is at or below on-prem.";
         }
 
-        $("chartNote").textContent = main.be
-          ? "Likely case. The gold line marks break-even, month " + main.be + "."
-          : "Likely case. No break-even month inside 5 years.";
+        if (model.blank) {
+          $("chartNote").textContent = model.feeStar == null
+            ? "Likely case. No fee makes SaaS cheaper inside 5 years."
+            : "Likely case. The fee is set so the two 5-year totals match.";
+        } else {
+          $("chartNote").textContent = main.be
+            ? "Likely case. The gold line marks break-even, month " + main.be + "."
+            : "Likely case. No break-even month inside 5 years.";
+        }
         $("stickyVal").textContent = headline.textContent;
         $("stickySum").hidden = false;
 
@@ -1272,20 +1325,22 @@
         const p = main.parts;
         const dash = "—";
         fillTable($("partTable"), [
-          { cells: ["Servers, power, space, licences", fmtThousand(p.onInfra), fmtThousand(p.sInfra)] },
+          { cells: ["Server running cost (power, space, support, licences)", fmtThousand(p.onInfra), fmtThousand(p.sInfra)] },
           { cells: ["People", fmtThousand(p.onPeople), fmtThousand(p.sPeople)] },
-          { cells: ["Upgrades", fmtThousand(p.onUpgrade), fmtThousand(p.sUpgrade)] },
+          { cells: ["Upgrades", state.ot ? fmtThousand(p.onUpgrade) : "In staff time", state.ot ? fmtThousand(p.sUpgrade) : "In staff time"] },
           { cells: ["Hardware refresh", fmtThousand(p.onRefresh), fmtThousand(p.sRefresh)] },
           { cells: ["Running both (" + trimNum(state.dual) + " months)", dash, fmtThousand(p.overlap)] },
           { cells: ["One-time move", dash, fmtThousand(p.mig)] },
-          { cells: ["Year-1 contingency (" + trimNum(state.ctg) + "%)", dash, fmtThousand(p.cont)] },
+          { cells: ["Year-1 contingency (" + trimNum(state.ctg) + "% of move and overlap)", dash, fmtThousand(p.cont)] },
           { cells: ["Subscription", dash, fmtThousand(p.sub)] },
           { total: true, cells: ["Total", fmtThousand(main.onprem), fmtThousand(main.saas)] }
         ]);
 
-        const fteText = (Math.round(people.fte * 10) / 10).toFixed(1);
         const opsText = (Math.round(people.fteOps * 10) / 10).toFixed(1);
-        $("fteLine").textContent = "After the move, about " + fteText + " FTE comes back (" + opsText + " FTE of daily platform work, plus lighter upgrades). Upgrade work over 5 years: " + Math.round(people.daysOn) + " person-days on-prem, about " + Math.round(people.daysSaas) + " with SaaS. For the first " + trimNum(state.dual) + " months both sides run, so little of this time comes back yet. This time is already inside the people cost above. It is not extra savings.";
+        const daysOnYear = Math.round(people.daysOnYear);
+        const daysSaasYear = Math.round(people.daysSaasYear);
+        const daysBack = Math.round(people.daysOnYear - people.daysSaasYear);
+        $("fteLine").textContent = "After the move, about " + opsText + " FTE of daily platform work comes back. Upgrade work is about " + daysOnYear + " person-days a year on-prem, and about " + daysSaasYear + " person-days a year with SaaS (about " + daysBack + " person-days a year come back). " + (state.ot ? "You ticked contractors or overtime, so that upgrade cost is also cash in the totals. " : "These upgrade days are staff time. They are not added as cash. ") + "For the first " + trimNum(state.dual) + " months both sides run, so little of the daily work comes back yet. The daily FTE is already inside the people cost. It is not extra savings.";
 
         const risk = $("riskList");
         risk.textContent = "";
@@ -1314,7 +1369,7 @@
           ["Servers", String(servers) + " (" + state.sol.length + " × " + trimNum(state.srv) + ")"],
           ["People (FTE)", trimNum(state.fte)],
           ["Yearly cost per engineer", fmtThousand(state.eng)],
-          ["Upgrades", "Every " + trimNum(state.uy) + " years, " + trimNum(state.ud) + " person-days"],
+          ["Upgrades", "Every " + trimNum(state.uy) + " years, " + trimNum(state.ud) + " person-days" + (state.ot ? ", added as cash" : ", staff time only")],
           ["Year-1 SaaS fee", state.sub == null ? "Blank (break-even fee " + (model.feeStar == null ? "not found" : fmtThousand(model.feeStar)) + ")" : fmtThousand(state.sub)]
         ];
         const printBody = $("printInputs");
@@ -1332,14 +1387,17 @@
         if (method.length >= 3) {
           method[0].textContent = "On-prem costs rise " + trimNum(state.oi) + "% a year. The SaaS fee rises " + trimNum(state.si) + "% a year. Servers and people you still run rise at the on-prem rate.";
           method[1].textContent = "With SaaS: " + trimNum(state.ic) + "% less infrastructure, " + trimNum(state.oc) + "% less ops effort, " + trimNum(state.uc) + "% less upgrade effort.";
-          method[2].textContent = "Year 1 adds a one-time move, " + trimNum(state.dual) + " months running both, and " + trimNum(state.ctg) + "% contingency.";
+          method[2].textContent = "Year 1 adds a one-time move, " + trimNum(state.dual) + " months running both, and " + trimNum(state.ctg) + "% contingency on the move and the overlap only.";
+          if (method[3]) method[3].textContent = state.ot
+            ? "Upgrade cost is cash, because contractors or overtime is ticked. Risk items are not added to the savings."
+            : "Upgrade days are staff time, not extra cash. Risk items are not added to the savings.";
         }
         $("printDate").textContent = "Printed " + new Date().toISOString().slice(0, 10);
         $("printUrl").textContent = LIVE;
         drawQR($("printQR"));
 
         const saasName = model.blank && model.feeStar != null ? "SaaS at the break-even fee" : "SaaS";
-        renderChart(main, saasName);
+        renderChart(main, saasName, !model.blank);
         writeHash();
       }
 
@@ -1409,9 +1467,12 @@
         $("linkCopied").hidden = false;
         setTimeout(() => { $("linkCopied").hidden = true; }, 1600);
       });
-      $("printBtn").addEventListener("click", () => {
+      function preparePrint() {
         drawQR($("printQR"));
-        if (chart) chart.resize();
+        paintPrintChart();
+      }
+      $("printBtn").addEventListener("click", () => {
+        preparePrint();
         window.print();
       });
       $("discMore").addEventListener("click", () => {
@@ -1437,10 +1498,11 @@
         applying = false;
         render();
       });
-      window.addEventListener("beforeprint", () => {
-        drawQR($("printQR"));
-        if (chart) chart.resize();
-      });
+      window.addEventListener("beforeprint", preparePrint);
+      const printMedia = window.matchMedia("print");
+      const onPrintMedia = (e) => { if (e.matches) preparePrint(); };
+      if (printMedia.addEventListener) printMedia.addEventListener("change", onPrintMedia);
+      else if (printMedia.addListener) printMedia.addListener(onPrintMedia);
       window.addEventListener("error", (e) => {
         if (e && e.target && e.target.tagName === "SCRIPT") return;
         if ($("fatal")) $("fatal").hidden = false;
