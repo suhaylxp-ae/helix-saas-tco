@@ -144,28 +144,44 @@
     .print-only { display: none; }
     #fatal { margin: 0.8rem auto; padding: 0.7rem 0.9rem; background: #fdeeee; color: #9d2c2c; border-radius: 8px; }
     .fine { font-size: 0.78rem; color: #c9d6e8; margin: 0.2rem 0 0; }
+    .you-word, .unit-mob { display: none; }
     @media (max-width: 900px) {
       .sols, .fields { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 700px) {
       .sols, .fields, .pair-grid { grid-template-columns: 1fr; }
-      .col-h { display: none; }
-      .result-stick { position: sticky; top: 2.15rem; z-index: 30; background: linear-gradient(165deg, var(--navy), #16365f); margin: -1rem -1.1rem 0.5rem; padding: 1rem 1.1rem 0.2rem; }
+      .col-h, .keep-copy, .box.bmc, .layer-name.bmc { display: none; }
+      .disclaimer { position: static; }
+      .you-word, .unit-mob { display: inline; }
+      .unit-desk { display: none; }
+      .result-stick {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 60;
+        margin: 0;
+        border-radius: 0;
+        background: linear-gradient(165deg, var(--navy), #16365f);
+        padding: 0.7rem 0.9rem 0.55rem;
+        box-shadow: 0 8px 18px rgba(11, 31, 58, 0.28);
+      }
+      body.pin-result { padding-top: var(--stick-h, 8.5rem); }
       .sol, .actions button { min-height: 3rem; }
       h1 { font-size: 1.4rem; }
     }
     @media print {
       @page { size: auto; margin: 7mm; }
-      html, body { background: #fff; color: #102033; }
+      html, body { background: #fff; color: #102033; padding-top: 0 !important; }
       .disclaimer, .no-print, .actions, footer, details.method, .cur-row, .lede, .eyebrow { display: none !important; }
       .result { background: #fff; color: var(--navy); border: 1px solid var(--navy); box-shadow: none; padding: 0.35rem 0.5rem; }
       .result h2, .big, .second, .infra-line, .cash-note, .five, .buys, .fine { color: var(--navy); }
       .big { font-size: 1rem; margin-bottom: 0.15rem; }
       .second, .infra-line, .cash-note, .five, .buys { font-size: 0.72rem; margin-bottom: 0.12rem; }
-      .result-stick { position: static; margin: 0; padding: 0; background: transparent; }
+      .result-stick { position: static !important; margin: 0; padding: 0; background: transparent; box-shadow: none; border-radius: 0; }
       #costChart, #printChart { display: none !important; }
       .chart-print { display: block !important; width: 100%; height: auto; }
-      .chart-box { height: auto; }
+      .chart-box { height: auto !important; }
       .risk { margin: 0.15rem 0; padding: 0.2rem 0.4rem; }
       .risk li { margin: 0.08rem 0; font-size: 0.68rem; }
       header.top { padding: 0; }
@@ -233,7 +249,7 @@
       <h2 class="step">Your rate</h2>
       <div class="fields">
         <label class="field">
-          <span class="label-row">Cost per engineer day <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Default AED 1,950 a day, about US$530. Cooper Fitch UAE 2025: about AED 420,000 a year loaded, divided by 215 working days and rounded. The 215 is an estimate.">i</span> <a href="https://cooperfitch.ae/wp-content/uploads/2024/12/Salary-Guide-UAE-2025-Cooper-Fitch.pdf" target="_blank" rel="noopener">source</a></span>
+          <span class="label-row">Cost per engineer day <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Default AED 1,950 a day, about US$530. AED 30,000 a month × 12 × 1.25 loading ÷ 230 days, rounded. Cooper Fitch UAE Salary Guide 2025. The 1.25 is ours.">i</span> <a href="https://cooperfitch.ae/wp-content/uploads/2024/12/Salary-Guide-UAE-2025-Cooper-Fitch.pdf" target="_blank" rel="noopener">source</a></span>
           <span class="money-row"><span class="prefix" data-prefix>AED</span><input id="rate" type="number" min="0" step="1" inputmode="decimal" value="1950" /></span>
         </label>
         <label class="field">
@@ -244,21 +260,25 @@
           <span class="label-row">Your SaaS quote per year <span class="tip" tabindex="0" aria-label="Default source" data-tip="Leave blank to stay with days and staff time. Type your own yearly quote to see a plain 5-year comparison. This is not a price.">i</span></span>
           <span class="money-row"><span class="prefix" data-prefix>AED</span><input id="quote" type="number" min="0" step="1" inputmode="decimal" placeholder="Leave blank" /></span>
         </label>
+        <label class="field">
+          <span class="label-row">On-prem licence &amp; maintenance per year <span class="tip" tabindex="0" aria-label="Default source" data-tip="Leave blank unless you want it in the 5-year comparison. It is added to the on-prem side only when you also enter a SaaS quote.">i</span></span>
+          <span class="money-row"><span class="prefix" data-prefix>AED</span><input id="lic" type="number" min="0" step="1" inputmode="decimal" placeholder="Leave blank" /></span>
+        </label>
       </div>
     </section>
 
     <section class="card no-print" aria-label="Who runs what">
       <h2 class="step">2. Who runs what</h2>
-      <p class="rule" id="scaleNote">Shared platform days are counted once. Each extra solution adds 10% more of those days.</p>
+      <p class="rule" id="scaleNote">The platform is counted once. With one solution, scaling tasks are not lifted.</p>
       <div class="pair-grid" id="picture">
         <h3 class="col-h you">On-prem: you run it</h3>
         <h3 class="col-h bmc">BMC Helix SaaS</h3>
         <div class="box keep"><b>You keep this either way</b>Service governance &amp; performance management</div>
-        <div class="box keep"><b>You keep this either way</b>Service governance &amp; performance management</div>
+        <div class="box keep keep-copy"><b>You keep this either way</b>Service governance &amp; performance management</div>
         <div class="box keep"><b>You keep this either way</b>Operational reporting &amp; analytics</div>
-        <div class="box keep"><b>You keep this either way</b>Operational reporting &amp; analytics</div>
+        <div class="box keep keep-copy"><b>You keep this either way</b>Operational reporting &amp; analytics</div>
         <div class="box keep"><b>You keep this either way</b>Application administration, workflows &amp; integrations</div>
-        <div class="box keep"><b>You keep this either way</b>Application administration, workflows &amp; integrations</div>
+        <div class="box keep keep-copy"><b>You keep this either way</b>Application administration, workflows &amp; integrations</div>
       </div>
     </section>
 
@@ -278,12 +298,16 @@
       <div class="body">
         <p>A public source is linked. Everything else is an estimate, edit to match your team.</p>
         <ol>
-          <li>Engineer day rate. Cooper Fitch, UAE Salary Guide 2025. Cloud Engineer about AED 24,000–30,000 a month, DevOps Engineer about AED 23,000–30,000 a month, before bonus. We use AED 28,000 × 12 × 1.25 = AED 420,000 a year. The 1.25 is ours. Divided by 215 working days and rounded, that is AED 1,950 a day (about US$530). The 215 is an estimate. <a href="https://cooperfitch.ae/wp-content/uploads/2024/12/Salary-Guide-UAE-2025-Cooper-Fitch.pdf" target="_blank" rel="noopener">Cooper Fitch PDF</a></li>
+          <li>Engineer day rate. Cooper Fitch, UAE Salary Guide 2025. We use AED 30,000 a month × 12 × 1.25 loading ÷ 230 days, rounded to AED 1,950 a day (about US$530). The 1.25 is ours. <a href="https://cooperfitch.ae/wp-content/uploads/2024/12/Salary-Guide-UAE-2025-Cooper-Fitch.pdf" target="_blank" rel="noopener">Cooper Fitch PDF</a></li>
+          <li>Upgrades. BMC Helix On-Prem Container Upgrade Service. Estimated duration 6 to 10 weeks for one environment. The 30 days is staff effort, not that calendar window. <a href="https://www.helixops.ai/it-services/success-catalog/bmc-helix-on-premise-container-upgrade-service.html" target="_blank" rel="noopener">On-Prem Container Upgrade Service</a></li>
+          <li>Kubernetes release cycle. A new release about three times a year. <a href="https://kubernetes.io/releases/" target="_blank" rel="noopener">kubernetes.io/releases</a>. Spectro Cloud, State of Production Kubernetes 2025. The 20 days is an estimate. <a href="https://www.spectrocloud.com/state-of-kubernetes-2025" target="_blank" rel="noopener">Spectro Cloud 2025</a></li>
+          <li>TKU. BMC publishes Technology Knowledge Updates on a monthly schedule. The 10 days is an estimate of the work to apply them. <a href="https://docs.helixops.ai/bin/IT-Operations-Management/Discovery/BMC-Discovery/Configipedia/Technology-Knowledge-Updates-TKU/Schedule-and-Roadmap/" target="_blank" rel="noopener">TKU schedule</a></li>
+          <li>Penetration testing. PCI DSS expects a test at least once a year. The 4 days is an estimate of the time to manage that test. <a href="https://listings.pcisecuritystandards.org/documents/Penetration-Testing-Guidance-v1_1.pdf" target="_blank" rel="noopener">PCI penetration testing guidance (PDF)</a></li>
           <li>Availability. 99.9% in a month. Planned maintenance does not count as downtime. <a href="https://www.helixops.ai/content/dam/bmc/corporate/service-level-agreement.pdf" target="_blank" rel="noopener">BMC Helix service level agreement (PDF)</a></li>
           <li>Recovery. A 15-minute recovery point, and a 4-hour recovery time, unless the contract says otherwise. <a href="https://docs.helixops.ai/bin/Helix-Common-Services/Other/BMC-Helix-Subscriber-Information/helixsubscriber/Operations/Data-centers-and-architecture/Business-continuity-and-disaster-recovery/" target="_blank" rel="noopener">Business continuity and disaster recovery</a></li>
           <li>Certifications. ISO 27001, and a yearly SOC 2 Type II examination. <a href="https://docs.helixops.ai/bin/Helix-Common-Services/Other/BMC-Helix-Subscriber-Information/helixsubscriber/Security/Compliance/" target="_blank" rel="noopener">Compliance</a></li>
           <li>Data location. Backups for a UAE cloud subscription are stored in Abu Dhabi (UAE Central). Data stays in the country you select. <a href="https://docs.helixops.ai/bin/Helix-Common-Services/Other/BMC-Helix-Subscriber-Information/helixsubscriber/Operations/Data-centers-and-architecture/Service-locations/" target="_blank" rel="noopener">Service locations</a></li>
-          <li>Task days, the 10% added for each extra solution, the 10% your team still spends, 230 working days used to turn days into people, and AED 30,000 per server per year: estimate, edit to match your team.</li>
+          <li>Every other task day, the 50% added for each extra solution, the residual of 19 days plus 5 for each extra solution, 230 working days, and AED 30,000 per server per year: estimate, edit to match your team.</li>
         </ol>
       </div>
     </details>
@@ -313,75 +337,73 @@
       const LIVE = "https://suhaylxp-ae.github.io/helix-saas-tco/";
       const QR_N = 37;
       const QR_BITS = "0000000000000000000000000000000000000000000000000000000000000000000000000000111111100000000111111101001111111000010000010101000100010010110100000100001011101010001000101010000010111010000101110100011101100100011001011101000010111010000010010001110010101110100001000001000111100100110001010000010000111111101010101010101010101111111000000000000000111010111000110000000000000111011000011000111001011000001100000101010010101001100011111001101101000010000011001110111100100110011101100001000010110010111000010000101010000000101001110111111110110010110111010000011001001000010010001010000010101000001101001011011101010110100011001000000101001010101100111110100111010100000001110110001000100110111001101110000001111000001111001001000011010110010000000011101011000011001100110110110000000000101101010100000001101101000100001001101010110000110101011000011110000101011010010000010111111001101001000000010010100000111010100110111111100000110110011110101000110100011010000000101011100111011111100001111110011000000000000100011010101000110001100000001111111001101011101111111010100000000100000101110010010000111100011100000010111010010011011110010111111011100001011101011010101000011110001001110000101110101010100101101111111101100000010000010101001011000001111011000100001111111001111101001001010100101000000000000000000000000000000000000000000000000000000000000000000000000000000";
-      const TIP = "Estimate, edit to match your team. Not a vendor figure.";
+      const EST = " Estimate, edit to match your team.";
       const RATE = 1950;
       const SERVER = 30000;
       const PEOPLE_DAYS = 230;
       const SOL_IDS = ["sm", "ob", "cm", "ai"];
 
-      function tasks(rows) {
-        return rows.map(function (row) {
-          return { id: row[0], name: row[1], days: row[2], tip: "Default " + row[2] + " days a year. " + TIP };
-        });
+      function row(id, name, days, tip, scale, sourced) {
+        return { id: id, name: name, days: days, scale: !!scale, tip: tip + (sourced ? "" : EST) };
       }
 
       const LAYERS = [
-        { id: "ao", name: "Application operations", tasks: tasks([
-          ["ao1", "Upgrades & release testing", 12],
-          ["ao2", "Patching & hotfixes", 8],
-          ["ao3", "Env refreshes (dev/QA/prod)", 8]
-        ]) },
-        { id: "ss", name: "Software stack", tasks: tasks([
-          ["ss1", "Kubernetes / OpenShift", 10],
-          ["ss2", "Databases, search, messaging", 8],
-          ["ss3", "Adaptors & connectors runtime", 6]
-        ]) },
-        { id: "io", name: "Infrastructure operations", tasks: tasks([
-          ["io1", "HA design & DR failover tests", 8],
-          ["io2", "Backups & restore drills", 6],
-          ["io3", "Monitoring the platform itself", 8]
-        ]) },
-        { id: "sc", name: "Security & compliance", tasks: tasks([
-          ["sc1", "CVE tracking & hardening", 8],
-          ["sc2", "Penetration testing", 4],
-          ["sc3", "Audit evidence & certifications", 6]
-        ]) },
-        { id: "hw", name: "Hardware infrastructure", tasks: tasks([
-          ["hw1", "Compute, storage, network", 10],
-          ["hw2", "Capacity planning & scaling", 6],
-          ["hw3", "Data centre & availability zones", 12]
-        ]) }
+        { id: "ao", name: "Application operations", tasks: [
+          row("ao1", "Upgrades & release testing", 30, "Plan, run and test each new version across dev, test and production.", true, true),
+          row("ao2", "Patching & hotfixes", 12, "Apply fixes BMC releases between upgrades.", true, false),
+          row("ao3", "Environment refreshes", 8, "Rebuild dev, test and production from a clean copy.", true, false)
+        ] },
+        { id: "ss", name: "Software stack", tasks: [
+          row("ss1", "Kubernetes/OpenShift", 20, "Keep the container platform under Helix patched and healthy.", false, true),
+          row("ss2", "Databases, search, messaging", 15, "Patch and look after the databases, search, and message queues.", true, false),
+          row("ss3", "Adaptors & connectors runtime", 5, "Keep the connectors that move data in and out running.", true, false)
+        ] },
+        { id: "io", name: "Infrastructure operations", tasks: [
+          row("io1", "HA design & DR failover tests", 8, "Test that the spare site takes over if the main one fails.", false, false),
+          row("io2", "Backups & restore drills", 6, "Run backups and practise a restore.", true, false),
+          row("io3", "Monitoring the platform itself", 8, "Watch the platform that Helix runs on, not the business services.", true, false)
+        ] },
+        { id: "sc", name: "Security & compliance", tasks: [
+          row("sc1", "CVE tracking & hardening", 12, "Track new vulnerabilities and apply the hardening they need.", true, false),
+          row("sc2", "Penetration testing", 4, "Commission a yearly test that tries to break in.", false, true),
+          row("sc3", "Audit evidence & certifications", 5, "Collect the proof auditors ask for.", false, false)
+        ] },
+        { id: "hw", name: "Hardware infrastructure", tasks: [
+          row("hw1", "Compute, storage, network", 8, "Look after the servers, disks, and network Helix uses.", true, false),
+          row("hw2", "Capacity planning & scaling", 4, "Check you have enough room before you run out.", true, false),
+          row("hw3", "Data centre & availability zones", 3, "Deal with the data centre, power, and the extra site.", false, false)
+        ] }
       ];
 
       const SOLUTIONS = [
-        { id: "sm", name: "Service management", tasks: tasks([
-          ["sm1", "Platform & app upgrades", 18],
-          ["sm2", "Mid-tier & plugin servers", 12],
-          ["sm3", "SSO, email & notification engines", 12],
-          ["sm4", "Custom integration maintenance", 14],
-          ["sm5", "Regression testing per release", 10]
-        ]) },
-        { id: "ob", name: "Observability & AIOps", tasks: tasks([
-          ["ob1", "Event pipelines & connectors", 16],
-          ["ob2", "Metric & log store sizing", 14],
-          ["ob3", "ML and analytics services", 16],
-          ["ob4", "Retention & index management", 16],
-          ["ob5", "Agent rollout across the fleet", 14]
-        ]) },
-        { id: "cm", name: "Discovery & CMDB", tasks: tasks([
-          ["cm1", "Appliance patching & TKU updates", 18],
-          ["cm2", "Scanner & credential upkeep", 16],
-          ["cm3", "Reconciliation jobs & tuning", 15],
-          ["cm4", "Sync infrastructure", 14],
-          ["cm5", "Data-model change control", 12]
-        ]) },
-        { id: "ai", name: "HelixGPT & agentic AI", tasks: tasks([
-          ["ai1", "LLM hosting & GPU sizing", 20],
-          ["ai2", "Model and agent service updates", 16],
-          ["ai3", "Vector store & indexing ops", 14],
-          ["ai4", "AI scaling under load", 14],
-          ["ai5", "Guardrail & policy plumbing", 12]
-        ]) }
+        { id: "sm", name: "Service management", tasks: [
+          row("sm1", "Platform & app upgrades", 10, "Upgrade the service-management apps and retest your setup.", false, false),
+          row("sm2", "Mid-tier & plugin servers", 4, "Patch and restart the extra servers those apps need.", false, false),
+          row("sm3", "SSO, email & notification engines", 4, "Keep sign-on, email, and alerts working.", false, false),
+          row("sm4", "Custom integration maintenance", 10, "Fix the links you built to other systems when they change.", false, false),
+          row("sm5", "Regression testing per release", 10, "Retest your own workflows after each release.", false, false)
+        ] },
+        { id: "ob", name: "Observability & AIOps", tasks: [
+          row("ob1", "Event pipelines & connectors", 8, "Keep the pipes that bring events in from your tools.", false, false),
+          row("ob2", "Metric & log store sizing", 5, "Make sure metric and log storage does not fill up.", false, false),
+          row("ob3", "ML & analytics services", 4, "Look after the services that group events and spot patterns.", false, false),
+          row("ob4", "Retention & index management", 5, "Decide how long data is kept and keep the indexes healthy.", false, false),
+          row("ob5", "Agent rollout across fleet", 10, "Install and update the agents on your servers.", false, false)
+        ] },
+        { id: "cm", name: "Discovery & CMDB", tasks: [
+          row("cm1", "Appliance patching & TKU updates", 10, "Apply BMC's monthly discovery content and appliance OS updates.", false, true),
+          row("cm2", "Scanner & credential upkeep", 6, "Keep scan accounts working and the scanners online.", false, false),
+          row("cm3", "Reconciliation jobs & tuning", 8, "Tune the jobs that match new data to the CMDB.", false, false),
+          row("cm4", "Sync infrastructure", 4, "Keep the copy of data between Discovery and the CMDB moving.", false, false),
+          row("cm5", "Data-model change control", 4, "Control changes to the types of items you store.", false, false)
+        ] },
+        { id: "ai", name: "HelixGPT & agentic AI", tasks: [
+          row("ai1", "LLM hosting & GPU sizing", 6, "Host the model and make sure it has enough GPU.", false, false),
+          row("ai2", "Model & agent service updates", 6, "Apply new model and agent versions and retest them.", false, false),
+          row("ai3", "Vector store & indexing ops", 5, "Keep the search index the assistant uses up to date.", false, false),
+          row("ai4", "AI scaling under load", 4, "Add capacity when more people use the assistant.", false, false),
+          row("ai5", "Guardrail & policy plumbing", 5, "Keep the rules that limit what the assistant can do.", false, false)
+        ] }
       ];
 
       const TASKS = {};
@@ -401,7 +423,7 @@
       function fresh() {
         const days = {};
         Object.keys(TASKS).forEach(function (id) { days[id] = TASKS[id].days; });
-        return { cur: "aed", sol: ["sm"], rate: RATE, srv: 0, quote: null, days: days };
+        return { cur: "aed", sol: ["sm"], rate: RATE, srv: 0, quote: null, lic: null, days: days };
       }
 
       function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
@@ -429,27 +451,30 @@
 
       function calculate() {
         const n = state.sol.length;
-        const scaleNum = n === 0 ? 0 : 100 + 10 * (n - 1);
         const groups = [];
-        let sharedBase = 0;
+        if (n === 0) return { n: 0, groups: groups, gross: 0, residual: 0, returned: 0 };
+        const lift = 1 + 0.5 * (n - 1);
+        let gross = 0;
         LAYERS.forEach(function (layer) {
-          const base = sumTasks(layer.tasks);
-          sharedBase += base;
-          groups.push({ name: layer.name, gross: base * scaleNum / 100 });
+          let layerGross = 0;
+          layer.tasks.forEach(function (task) {
+            const days = state.days[task.id] || 0;
+            layerGross += task.scale ? days * lift : days;
+          });
+          gross += layerGross;
+          groups.push({ name: layer.name, gross: layerGross });
         });
-        let solutionBase = 0;
         SOLUTIONS.forEach(function (sol) {
           if (state.sol.indexOf(sol.id) < 0) return;
           const base = sumTasks(sol.tasks);
-          solutionBase += base;
+          gross += base;
           groups.push({ name: sol.name, gross: base });
         });
-        const gross = sharedBase * scaleNum / 100 + solutionBase;
-        const residual = Math.round(gross / 10);
-        const returned = Math.round(gross - residual);
+        const residual = 19 + 5 * (n - 1);
+        const returned = Math.max(0, Math.round(gross - residual));
         let left = returned;
         groups.forEach(function (group, index) {
-          if (!groups.length || gross <= 0) {
+          if (gross <= 0) {
             group.net = 0;
             return;
           }
@@ -459,7 +484,7 @@
             left -= group.net;
           }
         });
-        return { n: n, scaleNum: scaleNum, groups: groups, gross: gross, residual: residual, returned: returned };
+        return { n: n, groups: groups, gross: gross, residual: residual, returned: returned };
       }
 
       function paintSolutions() {
@@ -496,13 +521,13 @@
         const model = calculate();
         document.querySelectorAll("[data-scale-for]").forEach(function (el) {
           const id = el.dataset.scaleFor;
-          const base = state.days[id] || 0;
-          if (model.n === 0) {
-            el.textContent = "Not counted until you tick a solution.";
+          const task = TASKS[id];
+          if (!task || !task.scale || model.n <= 1) {
+            el.textContent = "";
             return;
           }
-          if (model.scaleNum === 100) el.textContent = "";
-          else el.textContent = "Counts as " + trim(base * model.scaleNum / 100) + " days with " + model.n + " solutions.";
+          const base = state.days[id] || 0;
+          el.textContent = "Counts as " + trim(base * (1 + 0.5 * (model.n - 1))) + " days with " + model.n + " solutions.";
         });
       }
 
@@ -534,6 +559,12 @@
           const q = pullMoney("quote", state.quote);
           if (q != null) state.quote = q;
         }
+        const licRaw = $("lic").value.trim();
+        if (licRaw === "") state.lic = null;
+        else {
+          const lic = pullMoney("lic", state.lic);
+          if (lic != null) state.lic = lic;
+        }
         document.querySelectorAll("[data-task]").forEach(function (input) {
           const raw = input.value.trim();
           if (raw === "") return;
@@ -550,11 +581,20 @@
         showMoney("rate", state.rate);
         if (document.activeElement !== $("srv")) $("srv").value = state.srv ? String(state.srv) : "";
         showMoney("quote", state.quote);
+        showMoney("lic", state.lic);
         showDays();
 
         const days = model.returned;
-        $("bigLine").textContent = "Your team spends about " + days + " days a year (" + peopleText(days) + ") on work BMC Helix runs for you on SaaS.";
-        $("moneyLine").textContent = "That is about " + fmt(days * state.rate) + " a year in staff time.";
+        const money = $("moneyLine");
+        if (model.n === 0) {
+          $("bigLine").textContent = "Tick at least one solution.";
+          money.hidden = true;
+          money.textContent = "";
+        } else {
+          $("bigLine").textContent = "Your team spends about " + days + " days a year (" + peopleText(days) + ") on work BMC Helix runs for you on SaaS.";
+          money.hidden = false;
+          money.textContent = "That is about " + fmt(days * state.rate) + " a year in staff time.";
+        }
         const infra = $("infraLine");
         if (state.srv > 0) {
           infra.hidden = false;
@@ -572,7 +612,7 @@
           buys.hidden = true;
           fiveNote.hidden = true;
         } else {
-          const onYear = model.gross * state.rate + state.srv * SERVER;
+          const onYear = model.gross * state.rate + state.srv * SERVER + (state.lic || 0);
           const saasYear = state.quote + model.residual * state.rate;
           const on5 = onYear * 5;
           const saas5 = saasYear * 5;
@@ -593,16 +633,17 @@
 
         const extra = Math.max(0, model.n - 1);
         $("scaleNote").textContent = model.n === 0
-          ? "Tick a solution. Shared platform days are counted once you do. Each extra solution adds 10% more of those days."
-          : "Shared platform days are counted once. " + (extra === 0
-            ? "With one solution, those days are not lifted."
-            : "You ticked " + model.n + " solutions, so shared days are " + (10 * extra) + "% higher.");
+          ? "Tick at least one solution. The platform is counted once you do."
+          : "The platform is counted once. " + (extra === 0
+            ? "With one solution, scaling tasks are not lifted."
+            : "Each extra solution adds half of the scaling days again. You ticked " + model.n + " solutions.");
 
         $("printDate").textContent = "Printed " + new Date().toISOString().slice(0, 10);
         $("printUrl").textContent = LIVE;
         drawQR($("printQR"));
         renderChart(model);
         writeHash();
+        pinResult();
       }
 
       function chartRows(model) {
@@ -623,6 +664,8 @@
 
       function makeChart(canvas, rows, large) {
         const font = large ? 20 : 12;
+        const ink = large ? "#102033" : "#e7eef8";
+        const grid = large ? "rgba(16, 32, 51, 0.12)" : "rgba(255, 255, 255, 0.18)";
         const options = {
           animation: false,
           responsive: !large,
@@ -633,8 +676,13 @@
             tooltip: { callbacks: { label: function (item) { return item.parsed.x + " days returned"; } } }
           },
           scales: {
-            x: { title: { display: true, text: "Days a year returned", font: { size: font } }, ticks: { font: { size: font }, precision: 0 }, beginAtZero: true },
-            y: { ticks: { font: { size: font } } }
+            x: {
+              title: { display: true, text: "Days a year returned", color: ink, font: { size: font } },
+              ticks: { color: ink, font: { size: font }, precision: 0 },
+              grid: { color: grid },
+              beginAtZero: true
+            },
+            y: { ticks: { color: ink, font: { size: font } }, grid: { color: grid } }
           }
         };
         if (large) {
@@ -674,6 +722,7 @@
         if (Math.round(state.rate) !== RATE) parts.push("rate=" + Math.round(state.rate));
         if (state.srv) parts.push("srv=" + state.srv);
         if (state.quote != null) parts.push("q=" + Math.round(state.quote));
+        if (state.lic != null) parts.push("lic=" + Math.round(state.lic));
         const changed = [];
         Object.keys(TASKS).forEach(function (id) {
           if (Math.round(state.days[id]) !== TASKS[id].days) changed.push(id + "." + Math.round(state.days[id]));
@@ -719,8 +768,10 @@
         if (!data) { state = next; return; }
         if (data.cur === "usd" || data.cur === "aed") next.cur = data.cur;
         if (Object.prototype.hasOwnProperty.call(data, "sol")) {
-          const ids = data.sol ? data.sol.split(".").filter(function (id) { return SOL_IDS.indexOf(id) >= 0; }) : [];
-          next.sol = SOL_IDS.filter(function (id) { return ids.indexOf(id) >= 0; });
+          const tokens = data.sol ? data.sol.split(".").filter(function (id) { return id; }) : [];
+          const ids = tokens.filter(function (id) { return SOL_IDS.indexOf(id) >= 0; });
+          if (tokens.length && !ids.length) next.sol = ["sm"];
+          else next.sol = SOL_IDS.filter(function (id) { return ids.indexOf(id) >= 0; });
         }
         if (data.rate != null) {
           const n = hashNum(data.rate, 0, 1e12);
@@ -735,6 +786,13 @@
           else {
             const n = hashNum(data.q, 0, 1e12);
             next.quote = n == null ? null : n;
+          }
+        }
+        if (Object.prototype.hasOwnProperty.call(data, "lic")) {
+          if (data.lic === "") next.lic = null;
+          else {
+            const n = hashNum(data.lic, 0, 1e12);
+            next.lic = n == null ? null : n;
           }
         }
         if (data.ov) {
@@ -780,20 +838,29 @@
             input.dataset.task = task.id;
             input.value = String(task.days);
             input.setAttribute("aria-label", task.name + ", days a year");
+            const youWord = document.createElement("span");
+            youWord.className = "you-word";
+            youWord.textContent = "you:";
             const unit = document.createElement("span");
+            unit.className = "unit-desk";
             unit.textContent = "days/year";
+            const unitMob = document.createElement("span");
+            unitMob.className = "unit-mob";
+            unitMob.textContent = "days, then BMC Helix runs it";
             const tip = document.createElement("span");
             tip.className = "tip";
             tip.tabIndex = 0;
             tip.setAttribute("aria-label", "Default source");
             tip.dataset.tip = task.tip;
             tip.textContent = "i";
+            edit.appendChild(youWord);
             edit.appendChild(input);
             edit.appendChild(unit);
+            edit.appendChild(unitMob);
             edit.appendChild(tip);
             you.appendChild(name);
             you.appendChild(edit);
-            if (shared) {
+            if (shared && task.scale) {
               const scaled = document.createElement("span");
               scaled.className = "scaled";
               scaled.dataset.scaleFor = task.id;
@@ -869,7 +936,7 @@
         readForm();
         render();
       });
-      ["rate", "srv", "quote"].forEach(function (id) {
+      ["rate", "srv", "quote", "lic"].forEach(function (id) {
         $(id).addEventListener("input", function () {
           if (applying) return;
           readForm();
@@ -913,6 +980,14 @@
         applying = false;
         render();
       });
+      function pinResult() {
+        const stick = document.querySelector(".result-stick");
+        if (!stick) return;
+        const narrow = window.matchMedia("(max-width: 700px)").matches;
+        document.body.classList.toggle("pin-result", narrow);
+        if (narrow) document.documentElement.style.setProperty("--stick-h", stick.offsetHeight + "px");
+      }
+      window.addEventListener("resize", pinResult);
       window.addEventListener("beforeprint", preparePrint);
       const printMedia = window.matchMedia("print");
       const onPrintMedia = function (e) { if (e.matches) preparePrint(); };

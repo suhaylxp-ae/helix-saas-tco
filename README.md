@@ -6,7 +6,7 @@ A one-page calculator for the days your team spends running BMC Helix on its own
 
 Live: https://suhaylxp-ae.github.io/helix-saas-tco/
 
-Task days, the 10% rules, and the sources are in `effort-defaults.md`.
+Task days, the scaling rule, and the sources are in `effort-defaults.md`.
 
 ## Use it in 3 steps
 
