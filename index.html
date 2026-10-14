@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>On-prem vs SaaS: 5-year cost</title>
+  <meta name="description" content="Compare five years of on-prem cost with SaaS. Cautious example by Suhayl Patel. Not a BMC Helix tool." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="On-prem vs SaaS: 5-year cost" />
+  <meta property="og:description" content="A cautious 5-year cost comparison. Personal project. Not a BMC Helix tool." />
+  <meta property="og:url" content="https://suhaylxp-ae.github.io/helix-saas-tco/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --navy: #0b1f3a;
+      --ink: #102033;
+      --muted: #5b6b80;
+      --line: #d8e0ea;
+      --paper: #f5f7fb;
+      --white: #ffffff;
+      --accent: #2f6fed;
+      --accent-2: #1f4fb8;
+      --gold: #c4a35a;
+      --good: #1f7a4d;
+      --warn: #9a5b12;
+      --bad: #9b2c2c;
+      --shadow: 0 10px 30px rgba(11, 31, 58, 0.08);
+      --mono: "IBM Plex Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      --sans: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+      --disclaimer-h: 3.1rem;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html, body { margin: 0; }
+    body {
+      color: var(--ink);
+      background: var(--paper);
+      font-family: var(--sans);
+      line-height: 1.45;
+    }
+    .disclaimer {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #111c2e;
+      color: #e8eef7;
+      border-bottom: 2px solid var(--gold);
+      padding: 0.55rem 1rem;
+      font-size: 0.78rem;
+      text-align: center;
+    }
+    .disclaimer strong { color: var(--gold); font-weight: 700; }
+    .disc-more {
+      display: none;
+      margin-left: 0.4rem;
+      font: inherit;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: transparent;
+      color: var(--gold);
+      border: 0;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    header.app-header {
+      background: linear-gradient(160deg, var(--navy) 0%, #16365f 55%, #0e2748 100%);
+      color: var(--white);
+      padding: 1.35rem 1.25rem 1.15rem;
+    }
+    .wrap { width: min(1120px, calc(100% - 1.5rem)); margin: 0 auto; }
+    header .eyebrow {
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 0 0 0.4rem;
+    }
+    header h1 {
+      font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+      font-weight: 650;
+      margin: 0 0 0.35rem;
+      letter-spacing: -0.02em;
+    }
+    header p.lede { margin: 0; max-width: 42rem; color: #d7e2f2; font-size: 0.98rem; }
+    .cur-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem;
+      margin-top: 0.9rem;
+    }
+    .cur-row span.lbl { font-size: 0.78rem; color: #c9d6e8; font-weight: 650; }
+    .cur-toggle { display: flex; gap: 0.25rem; background: rgba(255,255,255,0.08); padding: 0.2rem; border-radius: 999px; }
+    .cur-toggle button {
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.88rem;
+      border: 0;
+      background: transparent;
+      color: #fff;
+      min-height: 2.5rem;
+      min-width: 4.2rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .cur-toggle button[aria-pressed="true"] { background: #fff; color: var(--navy); }
+    .fx-note { font-size: 0.78rem; color: #c9d6e8; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+      gap: 1rem;
+      align-items: start;
+      margin: 1rem auto 0.5rem;
+    }
+    .card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .card h2, .panel h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1.02rem;
+      color: var(--navy);
+    }
+    .blurb { margin: 0 0 0.85rem; color: var(--muted); font-size: 0.88rem; }
+    .sols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .sol {
+      text-align: left;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 10px;
+      padding: 0.7rem 0.75rem;
+      cursor: pointer;
+      font: inherit;
+      color: var(--navy);
+      min-height: 3.2rem;
+      font-weight: 650;
+      font-size: 0.9rem;
+    }
+    .sol[aria-pressed="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+    .sol-note { font-size: 0.82rem; color: var(--muted); margin: 0.75rem 0 0; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .field-wide { grid-column: 1 / -1; }
+    label.field { display: flex; flex-direction: column; gap: 0.28rem; font-size: 0.84rem; color: var(--navy); font-weight: 650; }
+    .label-row { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+    .tip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #e7eef8;
+      color: var(--accent-2);
+      font-size: 0.68rem;
+      font-weight: 700;
+      cursor: help;
+      flex: 0 0 auto;
+    }
+    .tip:hover::after, .tip:focus::after, .tip.show::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 8px);
+      width: min(280px, 75vw);
+      background: var(--navy);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 400;
+      line-height: 1.35;
+      padding: 0.5rem 0.6rem;
+      border-radius: 8px;
+      z-index: 30;
+      box-shadow: var(--shadow);
+      white-space: normal;
+    }
+    .tip.tip-wide:hover::after, .tip.tip-wide:focus::after, .tip.tip-wide.show::after { width: min(420px, 86vw); }
+    a.src { font-size: 0.68rem; font-weight: 700; color: var(--accent-2); }
+    .money-row, .split { display: flex; align-items: center; gap: 0.4rem; }
+    .prefix { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); min-width: 2.4rem; }
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.5rem 0.55rem;
+      font: inherit;
+      font-size: 1rem;
+      color: var(--ink);
+      background: #fff;
+      min-height: 2.75rem;
+    }
+    input:focus, button:focus-visible, summary:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+    .outputs { position: sticky; top: calc(var(--disclaimer-h) + 0.6rem); }
+    .results-card {
+      background: linear-gradient(165deg, var(--navy) 0%, #16365f 100%);
+      color: #fff;
+      border-radius: 16px;
+      padding: 1.15rem 1.15rem 1rem;
+      box-shadow: var(--shadow);
+    }
+    .results-card h2 {
+      color: #fff;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 0 0 0.4rem;
+    }
+    .headline {
+      font-size: clamp(1.2rem, 2.2vw, 1.55rem);
+      font-weight: 700;
+      margin: 0 0 0.45rem;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+    .range-line, .fee-note, .be-line { margin: 0 0 0.55rem; font-size: 0.88rem; color: #d7e2f2; }
+    .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.2rem 0 0.7rem; }
+    .kpis > div { background: rgba(255,255,255,0.08); border-radius: 10px; padding: 0.55rem 0.65rem; }
+    .kpis span { display: block; font-size: 0.72rem; color: #c9d6e8; }
+    .kpis b { font-family: var(--mono); font-size: 0.92rem; font-weight: 650; }
+    .buys { margin: 0.35rem 0 0.2rem; font-size: 0.9rem; }
+    .buys ul { margin: 0.35rem 0 0; padding-left: 1.15rem; }
+    .buys li { margin: 0.28rem 0; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
+    .actions button {
+      font: inherit;
+      font-weight: 700;
+      min-height: 2.75rem;
+      border: 0;
+      border-radius: 10px;
+      padding: 0.5rem 0.9rem;
+      cursor: pointer;
+      background: #fff;
+      color: var(--navy);
+    }
+    .actions button.ghost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+    .copied { font-size: 0.8rem; color: #b8e0c8; margin: 0.45rem 0 0; }
+    .chart-card h3, .fte-card h3, .risk h3, .table-card h3 {
+      margin: 0 0 0.25rem;
+      font-size: 0.95rem;
+      color: var(--navy);
+    }
+    .chart-box { height: 250px; margin-top: 0.35rem; }
+    .fine { font-size: 0.78rem; color: var(--muted); margin: 0.45rem 0 0; }
+    .fte-card { border-left: 3px solid var(--good); }
+    .fte-card strong { color: var(--good); }
+    .risk {
+      border: 1px dashed #c5d0de;
+      border-radius: 12px;
+      background: #fbfcfe;
+      padding: 0.9rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .risk p, .fte-card p { margin: 0.35rem 0 0; font-size: 0.88rem; }
+    .risk ul { margin: 0.4rem 0 0; padding-left: 1.15rem; font-size: 0.88rem; }
+    .risk li { margin: 0.35rem 0; }
+    table.grid {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }
+    table.grid th {
+      text-align: left;
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0.35rem;
+      border-bottom: 1px solid var(--line);
+    }
+    table.grid td { padding: 0.38rem 0.35rem; border-bottom: 1px solid #eef2f7; vertical-align: top; }
+    table.grid td.num, table.grid th.num { text-align: right; font-family: var(--mono); font-size: 0.8rem; white-space: nowrap; }
+    table.grid tr.total td { font-weight: 700; color: var(--navy); }
+    .scroll { overflow-x: auto; }
+    details.method {
+      margin: 0 auto 0.8rem;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      padding: 0.2rem 1rem 0.4rem;
+    }
+    details.method summary { cursor: pointer; font-weight: 700; color: var(--navy); padding: 0.75rem 0; }
+    details.method .body { font-size: 0.9rem; color: var(--ink); padding-bottom: 0.8rem; }
+    details.method .body p { margin: 0 0 0.6rem; }
+    .assumptions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+    .sources ol { margin: 0.3rem 0 0; padding-left: 1.2rem; }
+    .sources li { margin: 0.45rem 0; }
+    .sources a, footer a, .about a { color: var(--accent-2); }
+    .about { margin-top: 0.4rem; }
+    footer { color: var(--muted); font-size: 0.82rem; padding: 0.2rem 0 2rem; }
+    footer p { margin: 0.35rem 0; }
+    .warn {
+      display: none;
+      margin: 0 0 0.7rem;
+      padding: 0.55rem 0.7rem;
+      background: #fff6e8;
+      border: 1px solid #efd2a8;
+      color: var(--warn);
+      border-radius: 8px;
+      font-size: 0.84rem;
+    }
+    .warn.show { display: block; }
+    .sticky-sum {
+      display: none;
+      justify-content: space-between;
+      gap: 0.6rem;
+      align-items: center;
+      background: var(--navy);
+      color: #fff;
+      border-radius: 10px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.82rem;
+      margin: 0.75rem auto 0;
+    }
+    .print-only { display: none; }
+    .print-inputs { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+    .print-inputs td { padding: 0.12rem 0.35rem; border-bottom: 1px solid #e6edf5; }
+    .print-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 0.8rem; margin-top: 0.25rem; }
+    .print-disc, .print-sources, .print-method { font-size: 0.68rem; color: var(--muted); margin: 0.2rem 0; }
+    #fatal {
+      margin: 1rem auto;
+      padding: 0.8rem 1rem;
+      background: #fdeeee;
+      color: var(--bad);
+      border-radius: 8px;
+    }
+    @media (min-width: 641px) {
+      .disc-short { display: none; }
+      .disc-full { display: inline; }
+    }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .outputs { position: static; }
+    }
+    @media (max-width: 640px) {
+      :root { --disclaimer-h: 2.4rem; }
+      .fields, .sols, .assumptions, .kpis { grid-template-columns: 1fr; }
+      .disc-short { display: inline; }
+      .disc-full { display: none; }
+      .disclaimer.expanded .disc-full { display: inline; }
+      .disc-more { display: inline; }
+      .disclaimer { font-size: 0.72rem; padding: 0.4rem 0.75rem; }
+      .disclaimer:not(.expanded) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .sticky-sum { display: flex; position: sticky; top: var(--disclaimer-h); z-index: 40; }
+      header h1 { font-size: 1.35rem; }
+      .sol, .actions button { min-height: 3rem; }
+    }
+    @media print {
+      @page { size: auto; margin: 7mm; }
+      html, body { background: #fff; color: #102033; }
+      .disclaimer, .no-print, .sticky-sum, .actions, .about, footer, details.method, .disc-more, .cur-row, header .lede, header .eyebrow { display: none !important; }
+      .layout { display: block; margin: 0; }
+      .outputs { position: static !important; }
+      .card, .results-card, .risk { box-shadow: none; margin: 0 0 0.25rem; }
+      .results-card {
+        background: #fff;
+        color: var(--navy);
+        border: 1px solid var(--navy);
+        padding: 0.35rem 0.5rem;
+        border-radius: 8px;
+      }
+      .results-card h2, .headline, .range-line, .fee-note, .be-line, .kpis span { color: var(--navy); }
+      .headline { font-size: 1rem; margin-bottom: 0.15rem; }
+      .range-line, .fee-note, .be-line { font-size: 0.68rem; margin-bottom: 0.15rem; }
+      .kpis { margin: 0.1rem 0 0.2rem; gap: 0.25rem; }
+      .kpis > div { background: #f5f7fb; padding: 0.2rem 0.35rem; }
+      .kpis b { font-size: 0.75rem; }
+      .buys { font-size: 0.68rem; }
+      .buys li { margin: 0.05rem 0; }
+      .chart-box { height: 72px; }
+      .risk { margin-bottom: 0.1rem; padding: 0.15rem 0.35rem; }
+      .print-foot { margin-top: 0; }
+      .buys { margin: 0.05rem 0 0.1rem; }
+      .buys li { margin: 0.02rem 0; }
+      .table-card { display: none !important; }
+      .chart-card, .fte-card, .table-card, .risk { padding: 0.25rem 0.4rem; border-radius: 6px; }
+      .fte-card p, .risk p, .risk li, .fine { font-size: 0.62rem; margin-top: 0.1rem; }
+      .risk ul { margin-top: 0.1rem; }
+      .risk li { margin: 0.04rem 0; }
+      table.grid { font-size: 0.62rem; }
+      table.grid td, table.grid th { padding: 0.08rem 0.25rem; }
+      header.app-header { background: #fff; color: var(--navy); padding: 0 0 0.2rem; }
+      header h1 { font-size: 1rem; color: var(--navy); margin: 0; }
+      .print-only { display: block; }
+      #printQR { width: 64px; height: 64px; }
+      .print-sources, .print-disc, .print-method { font-size: 0.58rem; }
+      .hide-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="disclaimer" role="note">
+    <span class="disc-short"><strong>Disclaimer.</strong> Personal project. Not a BMC Helix tool.</span>
+    <span class="disc-full"><strong>Disclaimer.</strong> Personal project. Not a BMC Helix tool. My own views. Illustrative estimates only.</span>
+    <button type="button" class="disc-more no-print" id="discMore" aria-expanded="false">more</button>
+  </div>
+
+  <header class="app-header">
+    <div class="wrap">
+      <p class="eyebrow">Personal project · cautious · not a BMC tool</p>
+      <h1>On-prem vs SaaS: 5-year cost</h1>
+      <p class="lede">See what five years on your own servers costs, next to a SaaS subscription. Plain figures. Not a quote.</p>
+      <div class="cur-row">
+        <span class="lbl">Currency</span>
+        <div class="cur-toggle" role="group" aria-label="Currency">
+          <button type="button" id="curAed" data-cur="aed" aria-pressed="true">AED</button>
+          <button type="button" id="curUsd" data-cur="usd" aria-pressed="false">US$</button>
+        </div>
+        <span class="fx-note">1 US$ = 3.6725 AED. Fixed rate. Switching converts every figure.</span>
+      </div>
+    </div>
+  </header>
+
+  <div id="stickySum" class="sticky-sum wrap" hidden>
+    <strong id="stickyVal">—</strong>
+  </div>
+
+  <p id="fatal" class="wrap" hidden>Something went wrong while calculating. Reload the page. Your last edit may not have been applied.</p>
+
+  <div class="wrap layout">
+    <div class="no-print">
+      <form id="calcForm" autocomplete="off" spellcheck="false">
+        <section class="card" aria-label="Solutions">
+          <h2>Solutions you run on-prem</h2>
+          <p class="blurb">Tick each one you run yourself. Each one adds servers. Team size and upgrade days below are the total for the ones you tick.</p>
+          <div class="sols" role="group" aria-label="Solutions">
+            <button type="button" class="sol" data-sol="sm" aria-pressed="true">Service Management</button>
+            <button type="button" class="sol" data-sol="ob" aria-pressed="true">Observability &amp; AIOps</button>
+            <button type="button" class="sol" data-sol="cm" aria-pressed="true">Discovery &amp; CMDB</button>
+            <button type="button" class="sol" data-sol="ai" aria-pressed="true">AI services</button>
+          </div>
+          <p class="sol-note" id="solNote"></p>
+        </section>
+
+        <section class="card" aria-label="Your numbers">
+          <h2>Your numbers</h2>
+          <p class="blurb">Hover or tap the <b>i</b> to see where the default comes from. Leave the fee blank if you do not have one.</p>
+          <div class="fields">
+            <label class="field">
+              <span class="label-row">Servers per solution <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 8 servers per solution, including test and disaster recovery. Our own careful estimate. Not a vendor price.">i</span></span>
+              <input id="srv" type="number" min="0" step="1" inputmode="decimal" value="8" />
+            </label>
+            <label class="field">
+              <span class="label-row">People running the platform today, FTE <span class="tip" tabindex="0" aria-label="Default source" data-tip="Full-time people who run the solutions you ticked. Default 3. Our own careful estimate for a small on-prem set.">i</span></span>
+              <input id="fte" type="number" min="0" step="0.1" inputmode="decimal" value="3" />
+            </label>
+            <label class="field">
+              <span class="label-row">Yearly cost per engineer <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Default AED 420,000 a year, including 1.25x loading. Cooper Fitch UAE 2025: Cloud Engineer about AED 24,000–30,000 a month, and DevOps Engineer about AED 23,000–30,000 a month, before bonus. We use AED 28,000 x 12 x 1.25. The 1.25 is our loading, not Cooper Fitch.">i</span> <a class="src" href="https://cooperfitch.ae/wp-content/uploads/2024/12/Salary-Guide-UAE-2025-Cooper-Fitch.pdf" target="_blank" rel="noopener">source</a></span>
+              <span class="money-row"><span class="prefix" data-prefix>AED</span><input id="eng" type="number" min="0" step="1" inputmode="decimal" value="420000" /></span>
+            </label>
+            <label class="field">
+              <span class="label-row">Upgrade every X years <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default every 2 years. An upgrade is counted in year 2, year 4, and so on, inside the 5-year view. Our own careful estimate.">i</span></span>
+              <input id="uy" type="number" min="1" step="1" inputmode="decimal" value="2" />
+            </label>
+            <label class="field">
+              <span class="label-row">Person-days each upgrade <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 120 person-days for one upgrade of the solutions you ticked. Not per solution. Our own careful estimate.">i</span></span>
+              <input id="ud" type="number" min="0" step="1" inputmode="decimal" value="120" />
+            </label>
+            <label class="field">
+              <span class="label-row">Yearly SaaS subscription (optional) <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Leave blank to see the year-1 fee where the 5-year totals match. This is not a price. If you type a fee, it is your figure for year 1. Later years rise at the SaaS rate (default 5% a year).">i</span></span>
+              <span class="money-row"><span class="prefix" data-prefix>AED</span><input id="sub" type="number" min="0" step="1" inputmode="decimal" placeholder="Leave blank" /></span>
+            </label>
+          </div>
+          <p class="sol-note" id="upNote"></p>
+        </section>
+      </form>
+    </div>
+
+    <div class="outputs">
+      <section class="results-card" aria-live="polite">
+        <h2>5-year result</h2>
+        <p class="headline" id="headline">—</p>
+        <div class="buys" id="buys" hidden>
+          <ul>
+            <li id="buyUp">Upgrades done for you. This model leaves your team with 20% of the upgrade work.</li>
+            <li>A 99.9% monthly availability commitment for Helix subscription services. Planned maintenance is excluded.</li>
+            <li>A 15-minute recovery point. The published recovery time is 4 hours.</li>
+            <li>ISO 27001 and a yearly SOC 2 Type II examination.</li>
+            <li>UAE data residency. For a UAE cloud subscription, backups are stored in Abu Dhabi. Data stays in the country you select.</li>
+          </ul>
+        </div>
+        <p class="fee-note" id="feeNote"></p>
+        <div class="kpis">
+          <div><span>On-prem, 5 years</span><b id="onpremOut">—</b></div>
+          <div><span id="saasLabel">SaaS, 5 years</span><b id="saasOut">—</b></div>
+        </div>
+        <p class="range-line" id="rangeLine"></p>
+        <p class="be-line" id="beLine"></p>
+        <div class="actions no-print">
+          <button type="button" id="copyLinkBtn">Copy link</button>
+          <button type="button" id="printBtn">Print one page</button>
+        </div>
+        <p class="copied" id="linkCopied" hidden>Link copied</p>
+      </section>
+
+      <section class="card chart-card" aria-label="Cumulative cost chart">
+        <h3>Cumulative cost</h3>
+        <p class="fine" id="chartNote">Likely case. The gold line is the break-even month.</p>
+        <div class="chart-box"><canvas id="costChart" aria-label="Cumulative on-prem and SaaS cost over 60 months"></canvas></div>
+        <p class="fine" id="chartFallback" hidden>The chart did not load. The totals above are still valid.</p>
+      </section>
+
+      <section class="card table-card">
+        <h3>Year by year</h3>
+        <div class="scroll">
+          <table class="grid" id="yearTable">
+            <thead>
+              <tr><th>Year</th><th class="num">On-prem</th><th class="num">SaaS</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="fine">Rounded. The total is rounded from the exact sum, so the rows may not add to the total exactly.</p>
+      </section>
+
+      <section class="card fte-card" aria-label="Staff time returned">
+        <h3>Staff time returned</h3>
+        <p id="fteLine">—</p>
+      </section>
+
+      <section class="card hide-print" aria-label="What is inside the totals">
+        <h3>What is inside the totals</h3>
+        <div class="scroll">
+          <table class="grid" id="partTable">
+            <thead>
+              <tr><th>Item</th><th class="num">On-prem</th><th class="num">SaaS</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="fine">People cost is cash inside the totals. The FTE line is that same time, not extra savings. Risk items are not in this table.</p>
+      </section>
+
+      <section class="risk" aria-label="Risk you stop carrying">
+        <h3>Risk you stop carrying</h3>
+        <p>Not added to the savings. These items are not turned into money.</p>
+        <ul id="riskList"></ul>
+      </section>
+
+      <div id="printExtras" class="print-only">
+        <p id="printInputsTitle" style="margin:0.2rem 0;font-weight:700;font-size:0.75rem;">Numbers used</p>
+        <table class="print-inputs" id="printInputs"></table>
+        <ul class="print-method">
+          <li>On-prem costs rise 3% a year. The SaaS fee rises 5% a year. Servers and people you still run rise at the on-prem rate.</li>
+          <li>With SaaS: 80% less infrastructure, 40% less ops effort, 80% less upgrade effort.</li>
+          <li>Year 1 adds a one-time move, 6 months running both, and 20% contingency.</li>
+          <li>Staff time is already inside the totals. Risk items are not added to the savings.</li>
+        </ul>
+        <p class="print-sources">Sources: Cooper Fitch UAE Salary Guide 2025; BMC Helix SLA, recovery, compliance, and service-location pages; Uptime Institute Annual Outage Analysis 2025. Server cost, cuts, and the move cost are our own careful estimates.</p>
+        <p class="print-disc">Personal project. Not a BMC Helix tool. My own views. Illustrative estimates only.</p>
+        <div class="print-foot">
+          <div>
+            <p id="printDate" style="margin:0;font-size:0.68rem;"></p>
+            <p id="printUrl" style="margin:0.15rem 0 0;font-size:0.62rem;word-break:break-all;"></p>
+          </div>
+          <canvas id="printQR" width="96" height="96" aria-label="QR code to the live calculator"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <details class="method" id="assumptions" open>
+      <summary>See assumptions</summary>
+      <div class="body">
+        <p>You can edit these. They are cautious examples, not a quote. Money fields follow the currency at the top.</p>
+        <div class="assumptions">
+          <label class="field">
+            <span class="label-row">Server cost per year <span class="tip tip-wide" tabindex="0" aria-label="Default source" data-tip="Default AED 30,000 per server per year. Includes power, space, and the licences you run yourself. The SaaS fee is separate. Our own careful estimate. Not a vendor price.">i</span></span>
+            <span class="money-row"><span class="prefix" data-prefix>AED</span><input id="sc" type="number" min="0" step="1" inputmode="decimal" value="30000" /></span>
+          </label>
+          <label class="field">
+            <span class="label-row">Hardware refresh per server <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default AED 30,000 per server, equal to one year of server cost. Paid in the refresh year. Our own careful estimate.">i</span></span>
+            <span class="money-row"><span class="prefix" data-prefix>AED</span><input id="hw" type="number" min="0" step="1" inputmode="decimal" value="30000" /></span>
+          </label>
+          <label class="field">
+            <span class="label-row">Hardware refresh every X years <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default every 5 years. Inside this view, that is year 5. Our own careful estimate.">i</span></span>
+            <input id="ry" type="number" min="1" step="1" inputmode="decimal" value="5" />
+          </label>
+          <label class="field">
+            <span class="label-row">On-prem cost rise, % a year <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 3% a year on servers, people, upgrades, and hardware refresh. Also used for the servers and people you still run with SaaS. Our own careful estimate.">i</span></span>
+            <input id="oi" type="number" min="0" max="100" step="0.1" inputmode="decimal" value="3" />
+          </label>
+          <label class="field">
+            <span class="label-row">SaaS fee rise, % a year <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 5% a year on the subscription only. Our own careful estimate.">i</span></span>
+            <input id="si" type="number" min="0" max="100" step="0.1" inputmode="decimal" value="5" />
+          </label>
+          <label class="field">
+            <span class="label-row">Less infrastructure with SaaS, % <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 80% less. You still run 20% of the servers (and of the hardware refresh). Our own careful estimate.">i</span></span>
+            <input id="ic" type="number" min="0" max="100" step="1" inputmode="decimal" value="80" />
+          </label>
+          <label class="field">
+            <span class="label-row">Less ops effort with SaaS, % <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 40% less. You still need 60% of today’s team. Our own careful estimate.">i</span></span>
+            <input id="oc" type="number" min="0" max="100" step="1" inputmode="decimal" value="40" />
+          </label>
+          <label class="field">
+            <span class="label-row">Less upgrade effort with SaaS, % <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 80% less. Your team keeps 20% of the upgrade days. Our own careful estimate.">i</span></span>
+            <input id="uc" type="number" min="0" max="100" step="1" inputmode="decimal" value="80" />
+          </label>
+          <label class="field">
+            <span class="label-row">One-time migration cost <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default AED 250,000, paid in month 1. Our own careful estimate. Not a services price.">i</span></span>
+            <span class="money-row"><span class="prefix" data-prefix>AED</span><input id="mig" type="number" min="0" step="1" inputmode="decimal" value="250000" /></span>
+          </label>
+          <label class="field">
+            <span class="label-row">Months running both <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 6 months. For those months you still pay the on-prem servers and team, on top of the reduced SaaS run-cost. Our own careful estimate.">i</span></span>
+            <input id="dual" type="number" min="0" max="12" step="1" inputmode="decimal" value="6" />
+          </label>
+          <label class="field">
+            <span class="label-row">Year-1 contingency, % <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 20% of all year-1 SaaS cost, including the fee, the overlap, and the move. Later years have no contingency. Our own careful estimate.">i</span></span>
+            <input id="ctg" type="number" min="0" max="100" step="1" inputmode="decimal" value="20" />
+          </label>
+          <label class="field">
+            <span class="label-row">Working days in a year <span class="tip" tabindex="0" aria-label="Default source" data-tip="Default 230. Used only to turn upgrade person-days into a cost. Our own careful estimate.">i</span></span>
+            <input id="wd" type="number" min="1" step="1" inputmode="decimal" value="230" />
+          </label>
+        </div>
+      </div>
+    </details>
+
+    <details class="method sources">
+      <summary>Sources</summary>
+      <div class="body">
+        <p>Defaults sit on a public figure where one exists. Where it does not, the number is our own careful estimate. Nothing here is a customer result.</p>
+        <ol>
+          <li>Engineer cost. Cooper Fitch, UAE Salary Guide 2025. Monthly pay, before bonus. Technology: Cloud Engineer AED 24,000–30,000; DevOps Engineer AED 23,000–30,000. We use AED 28,000 a month × 12 × 1.25 loading = AED 420,000. The 1.25 is ours. <a href="https://cooperfitch.ae/wp-content/uploads/2024/12/Salary-Guide-UAE-2025-Cooper-Fitch.pdf" target="_blank" rel="noopener">Cooper Fitch PDF</a></li>
+          <li>Availability. Helix subscription services, 99.9% in a month. Planned maintenance does not count as downtime. <a href="https://www.helixops.ai/content/dam/bmc/corporate/service-level-agreement.pdf" target="_blank" rel="noopener">BMC Helix service level agreement (PDF)</a></li>
+          <li>Recovery. BMC states a 15-minute recovery point and a 4-hour recovery time for BMC Helix services, unless the contract says otherwise. <a href="https://docs.helixops.ai/bin/Helix-Common-Services/Other/BMC-Helix-Subscriber-Information/helixsubscriber/Operations/Data-centers-and-architecture/Business-continuity-and-disaster-recovery/" target="_blank" rel="noopener">Business continuity and disaster recovery</a></li>
+          <li>Certifications. ISO 27001, and a yearly SOC 2 Type II examination, as described for BMC Helix services. <a href="https://docs.helixops.ai/bin/Helix-Common-Services/Other/BMC-Helix-Subscriber-Information/helixsubscriber/Security/Compliance/" target="_blank" rel="noopener">Compliance</a></li>
+          <li>Data location. Data stays in the country of the service location you select. Backups for a UAE OCI subscription are stored in Abu Dhabi (UAE Central). Confirm the site in your contract. <a href="https://docs.helixops.ai/bin/Helix-Common-Services/Other/BMC-Helix-Subscriber-Information/helixsubscriber/Operations/Data-centers-and-architecture/Service-locations/" target="_blank" rel="noopener">Service locations</a></li>
+          <li>Outage context, not a Helix figure. Uptime Institute, Annual Outage Analysis 2025: 54% of respondents said their most recent significant, serious, or severe outage cost more than US$100,000, and one in five said more than US$1 million. <a href="https://uptimeinstitute.com/uptime_assets/d7c049ef5b02a6e0a15540a3e5cb8fbf742c7fa54a1af6caeaaab32b7c15d443-GA-2025-05-annual-outage-analysis.pdf" target="_blank" rel="noopener">Uptime executive summary (PDF)</a> · <a href="https://uptimeinstitute.com/about-ui/press-releases/uptime-announces-annual-outage-analysis-report-2025" target="_blank" rel="noopener">Press release</a></li>
+        </ol>
+        <p>Our own careful estimates, with no public price: servers per solution, yearly server cost, hardware refresh, the 3% and 5% rises, the 80/40/80 effort cuts, migration cost, months running both, year-1 contingency, upgrade timing and days, working days, and the default team size.</p>
+      </div>
+    </details>
+
+    <section class="card about" aria-label="About">
+      <h2>About</h2>
+      <p>Built by Suhayl Patel. I use this when a 5-year cost talk needs a cautious, shareable example.</p>
+      <p class="fine">Helix is a trademark of BMC Software. No customer names or customer data are used.</p>
+    </section>
+  </div>
+
+  <footer class="wrap">
+    <p><a href="https://www.linkedin.com/in/suhaylxp/" rel="noopener">LinkedIn</a> · <a href="https://suhaylxp-ae.github.io/helix-roi-calculator/">Also see my Helix ROI calculator</a></p>
+    <p>Personal project. Not a BMC Helix tool. My own views. Illustrative estimates only.</p>
+  </footer>
+
+  <script>
+    (function () {
+      const FX = 3.6725;
+      const LIVE = "https://suhaylxp-ae.github.io/helix-saas-tco/";
+      const QR_N = 37;
+      const QR_BITS = "0000000000000000000000000000000000000000000000000000000000000000000000000000111111100000000111111101001111111000010000010101000100010010110100000100001011101010001000101010000010111010000101110100011101100100011001011101000010111010000010010001110010101110100001000001000111100100110001010000010000111111101010101010101010101111111000000000000000111010111000110000000000000111011000011000111001011000001100000101010010101001100011111001101101000010000011001110111100100110011101100001000010110010111000010000101010000000101001110111111110110010110111010000011001001000010010001010000010101000001101001011011101010110100011001000000101001010101100111110100111010100000001110110001000100110111001101110000001111000001111001001000011010110010000000011101011000011001100110110110000000000101101010100000001101101000100001001101010110000110101011000011110000101011010010000010111111001101001000000010010100000111010100110111111100000110110011110101000110100011010000000101011100111011111100001111110011000000000000100011010101000110001100000001111111001101011101111111010100000000100000101110010010000111100011100000010111010010011011110010111111011100001011101011010101000011110001001110000101110101010100101101111111101100000010000010101001011000001111011000100001111111001111101001001010100101000000000000000000000000000000000000000000000000000000000000000000000000000000";
+      const SOL_IDS = ["sm", "ob", "cm", "ai"];
+      const DEFAULTS = {
+        cur: "aed",
+        sol: ["sm", "ob", "cm", "ai"],
+        srv: 8,
+        fte: 3,
+        eng: 420000,
+        uy: 2,
+        ud: 120,
+        sub: null,
+        sc: 30000,
+        hw: 30000,
+        ry: 5,
+        oi: 3,
+        si: 5,
+        ic: 80,
+        oc: 40,
+        uc: 80,
+        mig: 250000,
+        dual: 6,
+        ctg: 20,
+        wd: 230
+      };
+      const MONEY_KEYS = { eng: 1, sub: 1, sc: 1, hw: 1, mig: 1 };
+      const LIMITS = {
+        srv: [0, 100000], fte: [0, 100000], eng: [0, 1e12], uy: [1, 30], ud: [0, 100000],
+        sub: [0, 1e12], sc: [0, 1e12], hw: [0, 1e12], ry: [1, 30], oi: [0, 100], si: [0, 100],
+        ic: [0, 100], oc: [0, 100], uc: [0, 100], mig: [0, 1e12], dual: [0, 12], ctg: [0, 100], wd: [1, 366]
+      };
+
+      let state = fresh();
+      let chart = null;
+      let hashReady = false;
+      let applying = false;
+
+      const $ = (id) => document.getElementById(id);
+
+      function fresh() {
+        return Object.assign({}, DEFAULTS, { sol: DEFAULTS.sol.slice(), sub: null });
+      }
+
+      function clamp(n, min, max) {
+        return Math.min(max, Math.max(min, n));
+      }
+
+      function toDisp(aed) {
+        return state.cur === "usd" ? aed / FX : aed;
+      }
+
+      function fromDisp(n) {
+        return state.cur === "usd" ? n * FX : n;
+      }
+
+      function prefix() {
+        return state.cur === "usd" ? "US$" : "AED ";
+      }
+
+      function fmtThousand(aed) {
+        const n = toDisp(aed);
+        const sign = n < 0 ? "-" : "";
+        const v = Math.abs(n);
+        const r = v >= 1000 ? Math.round(v / 1000) * 1000 : Math.round(v);
+        return sign + prefix() + r.toLocaleString("en-US");
+      }
+
+      function fmtMillion(aed) {
+        const n = toDisp(aed);
+        const sign = n < 0 ? "-" : "";
+        const v = Math.abs(n);
+        if (v < 1000000) return fmtThousand(aed);
+        const s = (Math.round(v / 1e5) / 10).toFixed(1);
+        return sign + prefix() + s + " million";
+      }
+
+      function fmtAxis(displayValue) {
+        const v = Math.abs(displayValue);
+        const sign = displayValue < 0 ? "-" : "";
+        if (v >= 1000000) return sign + (v / 1000000).toFixed(1);
+        if (v >= 1000) return sign + Math.round(v / 1000) + "k";
+        return sign + Math.round(v);
+      }
+
+      function hits(step) {
+        const n = Math.max(1, Math.round(step));
+        const years = [];
+        for (let y = n; y <= 5; y += n) years.push(y);
+        return years;
+      }
+
+      function yearList(years) {
+        if (!years.length) return "none in these 5 years";
+        if (years.length === 1) return "year " + years[0];
+        return "years " + years.slice(0, -1).join(", ") + " and " + years[years.length - 1];
+      }
+
+      function project(s, fee) {
+        const servers = s.sol.length * s.srv;
+        const infraKeep = 1 - s.ic / 100;
+        const opsKeep = 1 - s.oc / 100;
+        const upKeep = 1 - s.uc / 100;
+        const onInfl = s.oi / 100;
+        const saasInfl = s.si / 100;
+        const cont = s.ctg / 100;
+        const dual = clamp(Math.round(s.dual), 0, 12);
+        const wd = Math.max(1, s.wd);
+        const upYears = hits(s.uy);
+        const refYears = hits(s.ry);
+        const monthsO = [];
+        const monthsS = [];
+        const parts = {
+          onInfra: 0, onPeople: 0, onUpgrade: 0, onRefresh: 0,
+          sInfra: 0, sPeople: 0, sUpgrade: 0, sRefresh: 0,
+          overlap: 0, mig: 0, cont: 0, sub: 0
+        };
+
+        for (let y = 1; y <= 5; y++) {
+          const gO = Math.pow(1 + onInfl, y - 1);
+          const gS = Math.pow(1 + saasInfl, y - 1);
+          const infra = servers * s.sc * gO;
+          const people = s.fte * s.eng * gO;
+          const upHit = upYears.indexOf(y) >= 0;
+          const upgrade = upHit ? s.ud * (s.eng / wd) * gO : 0;
+          const refHit = refYears.indexOf(y) >= 0;
+          const refresh = refHit ? servers * s.hw * gO : 0;
+          const infraS = infra * infraKeep;
+          const peopleS = people * opsKeep;
+          const upgradeS = upgrade * upKeep;
+          const refreshS = refresh * infraKeep;
+          const sub = (fee || 0) * gS;
+          const dualFrac = y === 1 ? dual / 12 : 0;
+          const extraInfra = (infra - infraS) * dualFrac;
+          const extraPeople = (people - peopleS) * dualFrac;
+          const fullUp = upHit && y === 1 && dual >= 12;
+          const fullRef = refHit && y === 1 && dual >= 12;
+          const sUp = upHit ? (fullUp ? upgrade : upgradeS) : 0;
+          const sRef = refHit ? (fullRef ? refresh : refreshS) : 0;
+          const extraUp = fullUp ? upgrade - upgradeS : 0;
+          const extraRef = fullRef ? refresh - refreshS : 0;
+          const mig = y === 1 ? s.mig : 0;
+
+          const mo = new Array(12).fill(0);
+          const ms = new Array(12).fill(0);
+          for (let m = 0; m < 12; m++) {
+            mo[m] += (infra + people) / 12;
+            ms[m] += (infraS + peopleS + sub) / 12;
+            if (y === 1 && dual > 0 && m < dual) {
+              ms[m] += extraInfra / dual + extraPeople / dual;
+            }
+          }
+          if (upHit) mo[11] += upgrade;
+          if (refHit) mo[11] += refresh;
+          if (sUp) ms[11] += sUp;
+          if (sRef) ms[11] += sRef;
+          if (mig) ms[0] += mig;
+          const pre = ms.reduce((a, b) => a + b, 0);
+          const cty = y === 1 ? pre * cont : 0;
+          if (cty) ms[0] += cty;
+
+          parts.onInfra += infra;
+          parts.onPeople += people;
+          parts.onUpgrade += upgrade;
+          parts.onRefresh += refresh;
+          parts.sInfra += infraS;
+          parts.sPeople += peopleS;
+          parts.sUpgrade += upgradeS;
+          parts.sRefresh += refreshS;
+          parts.overlap += extraInfra + extraPeople + extraUp + extraRef;
+          parts.mig += mig;
+          parts.cont += cty;
+          parts.sub += sub;
+          monthsO.push.apply(monthsO, mo);
+          monthsS.push.apply(monthsS, ms);
+        }
+
+        const sum = (arr) => arr.reduce((a, b) => a + b, 0);
+        let runO = 0;
+        let runS = 0;
+        let be = null;
+        const cumO = [];
+        const cumS = [];
+        for (let i = 0; i < 60; i++) {
+          runO += monthsO[i];
+          runS += monthsS[i];
+          cumO.push(runO);
+          cumS.push(runS);
+          if (be == null && runS <= runO + 0.5) be = i + 1;
+        }
+        return {
+          servers: servers,
+          upYears: upYears,
+          refYears: refYears,
+          onprem: sum(monthsO),
+          saas: sum(monthsS),
+          parts: parts,
+          monthsO: monthsO,
+          monthsS: monthsS,
+          cumO: cumO,
+          cumS: cumS,
+          be: be
+        };
+      }
+
+      function staff(s, upYears) {
+        const wd = Math.max(1, s.wd);
+        const events = upYears.length;
+        const daysOn = events * s.ud;
+        const daysSaas = events * s.ud * (1 - s.uc / 100);
+        const fteOps = s.fte * (s.oc / 100);
+        const fteUp = ((daysOn - daysSaas) / 5) / wd;
+        return { fte: fteOps + fteUp, fteOps: fteOps, daysOn: daysOn, daysSaas: daysSaas };
+      }
+
+      function evaluate() {
+        const zero = project(state, 0);
+        const one = project(state, 1);
+        const weight = one.saas - zero.saas;
+        let feeStar = null;
+        if (weight > 1e-6) {
+          const f = (zero.onprem - zero.saas) / weight;
+          if (f > 1) feeStar = f;
+        }
+        const blank = state.sub == null;
+        const feeUsed = blank ? (feeStar == null ? 0 : feeStar) : state.sub;
+        const main = (blank && feeStar == null) ? zero : (Math.abs(feeUsed) < 1e-9 ? zero : (Math.abs(feeUsed - 1) < 1e-9 ? one : project(state, feeUsed)));
+        const people = staff(state, main.upYears);
+        return {
+          blank: blank,
+          feeStar: feeStar,
+          feeUsed: feeUsed,
+          main: main,
+          people: people
+        };
+      }
+
+      function bandOverlap(onprem, saas) {
+        return onprem * 0.8 <= saas * 1.2 && saas * 0.8 <= onprem * 1.2;
+      }
+
+      function paintSolutions() {
+        document.querySelectorAll(".sol").forEach((btn) => {
+          btn.setAttribute("aria-pressed", state.sol.indexOf(btn.dataset.sol) >= 0 ? "true" : "false");
+        });
+      }
+
+      function paintCurrency() {
+        const usd = state.cur === "usd";
+        $("curAed").setAttribute("aria-pressed", usd ? "false" : "true");
+        $("curUsd").setAttribute("aria-pressed", usd ? "true" : "false");
+        document.querySelectorAll("[data-prefix]").forEach((el) => {
+          el.textContent = usd ? "US$" : "AED";
+        });
+      }
+
+      function showNum(id, value) {
+        const el = $(id);
+        if (!el || document.activeElement === el) return;
+        if (value == null) {
+          el.value = "";
+          return;
+        }
+        const n = MONEY_KEYS[id] ? Math.round(toDisp(value)) : value;
+        const rounded = Math.round(n * 1000) / 1000;
+        el.value = String(rounded);
+      }
+
+      function writeForm() {
+        paintCurrency();
+        paintSolutions();
+        ["srv", "fte", "uy", "ud", "sc", "hw", "ry", "oi", "si", "ic", "oc", "uc", "dual", "ctg", "wd", "eng", "mig"].forEach((id) => {
+          showNum(id, state[id]);
+        });
+        showNum("sub", state.sub);
+      }
+
+      function pullNumber(id) {
+        const raw = $(id).value.trim();
+        if (raw === "") return null;
+        const n = Number(raw);
+        if (!Number.isFinite(n)) return null;
+        const lim = LIMITS[id];
+        if (MONEY_KEYS[id] && state[id] != null) {
+          const shown = Math.round(toDisp(state[id]));
+          if (Math.round(n) === shown) return state[id];
+        }
+        const stored = MONEY_KEYS[id] ? fromDisp(n) : n;
+        return clamp(stored, lim[0], lim[1]);
+      }
+
+      function readForm() {
+        ["srv", "fte", "eng", "uy", "ud", "sc", "hw", "ry", "oi", "si", "ic", "oc", "uc", "mig", "dual", "ctg", "wd"].forEach((id) => {
+          const n = pullNumber(id);
+          if (n != null) state[id] = n;
+        });
+        const raw = $("sub").value.trim();
+        if (raw === "") state.sub = null;
+        else {
+          const n = pullNumber("sub");
+          if (n != null) state.sub = n;
+        }
+      }
+
+      function near(a, b) {
+        return Math.abs(a - b) < 0.51;
+      }
+
+      function writeHash() {
+        if (!hashReady || applying) return;
+        const parts = ["cur=" + (state.cur === "usd" ? "usd" : "aed")];
+        parts.push("sol=" + state.sol.join("."));
+        parts.push("srv=" + Math.round(state.srv));
+        parts.push("fte=" + (Math.round(state.fte * 1000) / 1000));
+        parts.push("eng=" + Math.round(state.eng));
+        parts.push("uy=" + (Math.round(state.uy * 1000) / 1000));
+        parts.push("ud=" + (Math.round(state.ud * 1000) / 1000));
+        if (state.sub != null) parts.push("sub=" + Math.round(state.sub));
+        const opt = [
+          ["sc", state.sc], ["hw", state.hw], ["ry", state.ry], ["oi", state.oi], ["si", state.si],
+          ["ic", state.ic], ["oc", state.oc], ["uc", state.uc], ["mig", state.mig],
+          ["dual", state.dual], ["ctg", state.ctg], ["wd", state.wd]
+        ];
+        opt.forEach((pair) => {
+          if (!near(pair[1], DEFAULTS[pair[0]])) parts.push(pair[0] + "=" + (Math.round(pair[1] * 1000) / 1000));
+        });
+        const next = "#" + parts.join("&");
+        if (location.hash !== next && history.replaceState) history.replaceState(null, "", next);
+      }
+
+      function parseHash() {
+        try {
+          const raw = location.hash.replace(/^#/, "");
+          if (!raw) return null;
+          const data = {};
+          raw.split("&").forEach((pair) => {
+            if (!pair) return;
+            const i = pair.indexOf("=");
+            if (i < 0) return;
+            let k;
+            let v;
+            try {
+              k = decodeURIComponent(pair.slice(0, i));
+              v = decodeURIComponent(pair.slice(i + 1));
+            } catch (e) {
+              return;
+            }
+            if (!/^[a-z]{2,4}$/.test(k)) return;
+            if (v.length > 24) return;
+            data[k] = v;
+          });
+          return data;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function hashNum(v, fallback, min, max) {
+        if (v == null || v === "") return fallback;
+        const n = Number(v);
+        if (!Number.isFinite(n)) return fallback;
+        return clamp(n, min, max);
+      }
+
+      function applyHash(data) {
+        const next = fresh();
+        if (!data) {
+          state = next;
+          return;
+        }
+        if (data.cur === "usd" || data.cur === "aed") next.cur = data.cur;
+        if (Object.prototype.hasOwnProperty.call(data, "sol")) {
+          if (data.sol === "" || /^((sm|ob|cm|ai)(\.(sm|ob|cm|ai))*)$/.test(data.sol)) {
+            const ids = data.sol ? data.sol.split(".") : [];
+            next.sol = SOL_IDS.filter((id) => ids.indexOf(id) >= 0);
+          }
+        }
+        next.srv = hashNum(data.srv, next.srv, 0, 100000);
+        next.fte = hashNum(data.fte, next.fte, 0, 100000);
+        next.eng = hashNum(data.eng, next.eng, 0, 1e12);
+        next.uy = hashNum(data.uy, next.uy, 1, 30);
+        next.ud = hashNum(data.ud, next.ud, 0, 100000);
+        if (Object.prototype.hasOwnProperty.call(data, "sub")) {
+          if (data.sub === "") next.sub = null;
+          else {
+            const n = Number(data.sub);
+            next.sub = Number.isFinite(n) ? clamp(n, 0, 1e12) : null;
+          }
+        }
+        ["sc", "hw", "ry", "oi", "si", "ic", "oc", "uc", "mig", "dual", "ctg", "wd"].forEach((id) => {
+          if (data[id] == null) return;
+          const lim = LIMITS[id];
+          next[id] = hashNum(data[id], next[id], lim[0], lim[1]);
+        });
+        state = next;
+      }
+
+      function fillTable(table, rows) {
+        const body = table.querySelector("tbody");
+        body.textContent = "";
+        rows.forEach((row) => {
+          const tr = document.createElement("tr");
+          if (row.total) tr.className = "total";
+          row.cells.forEach((cell, idx) => {
+            const td = document.createElement("td");
+            if (idx > 0) td.className = "num";
+            td.textContent = cell;
+            tr.appendChild(td);
+          });
+          body.appendChild(tr);
+        });
+      }
+
+      function drawQR(canvas) {
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const n = QR_N;
+        const cell = canvas.width / n;
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#0b1f3a";
+        for (let y = 0; y < n; y++) {
+          for (let x = 0; x < n; x++) {
+            if (QR_BITS.charAt(y * n + x) === "1") ctx.fillRect(x * cell, y * cell, cell + 0.4, cell + 0.4);
+          }
+        }
+      }
+
+      function renderChart(main, saasName) {
+        const canvas = $("costChart");
+        const fallback = $("chartFallback");
+        if (!window.Chart) {
+          fallback.hidden = false;
+          return;
+        }
+        fallback.hidden = true;
+        const labels = [];
+        for (let i = 1; i <= 60; i++) labels.push(i);
+        const onData = main.cumO.map(toDisp);
+        const saasData = main.cumS.map(toDisp);
+        const axisMillion = Math.max.apply(null, onData.concat(saasData)) >= 1000000;
+        if (chart) chart.destroy();
+        chart = new Chart(canvas, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              { label: "On-prem", data: onData, borderColor: "#0b1f3a", backgroundColor: "transparent", pointRadius: 0, borderWidth: 2, tension: 0 },
+              { label: saasName, data: saasData, borderColor: "#2f6fed", backgroundColor: "transparent", pointRadius: 0, borderWidth: 2, tension: 0 }
+            ]
+          },
+          options: {
+            animation: false,
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+              legend: { position: "top", labels: { boxWidth: 10, font: { size: 11 }, padding: 8 } },
+              tooltip: {
+                callbacks: {
+                  title: (items) => "Month " + items[0].label,
+                  label: (item) => item.dataset.label + ": " + fmtThousand(state.cur === "usd" ? item.parsed.y * FX : item.parsed.y)
+                }
+              },
+              breakevenLine: { month: main.be }
+            },
+            scales: {
+              x: {
+                title: { display: true, text: "Month", font: { size: 11 } },
+                ticks: {
+                  maxTicksLimit: 6,
+                  callback: function (value) {
+                    const m = Number(this.getLabelForValue(value));
+                    return m % 12 === 0 ? "Year " + (m / 12) : "";
+                  }
+                }
+              },
+              y: {
+                title: { display: true, text: axisMillion ? (state.cur === "usd" ? "US$ million" : "AED million") : prefix().trim(), font: { size: 11 } },
+                ticks: {
+                  callback: (v) => axisMillion ? (v / 1000000).toFixed(1) : fmtAxis(v)
+                }
+              }
+            }
+          },
+          plugins: [{
+            id: "breakevenLine",
+            afterDraw: function (c, args, opts) {
+              if (!opts || !opts.month) return;
+              const xScale = c.scales.x;
+              const yScale = c.scales.y;
+              if (!xScale || !yScale) return;
+              const x = xScale.getPixelForValue(opts.month - 1);
+              const g = c.ctx;
+              g.save();
+              g.beginPath();
+              g.setLineDash([4, 3]);
+              g.strokeStyle = "#c4a35a";
+              g.lineWidth = 1.5;
+              g.moveTo(x, yScale.top);
+              g.lineTo(x, yScale.bottom);
+              g.stroke();
+              g.restore();
+            }
+          }]
+        });
+      }
+
+      function render() {
+        const model = evaluate();
+        const main = model.main;
+        const people = model.people;
+        const save = main.onprem - main.saas;
+        const servers = state.sol.length * state.srv;
+        const upYears = hits(state.uy);
+        const refYears = hits(state.ry);
+
+        $("solNote").textContent = state.sol.length
+          ? (servers + " servers (" + state.sol.length + " × " + trimNum(state.srv) + "). Team " + trimNum(state.fte) + " FTE for this set. Each upgrade is " + trimNum(state.ud) + " person-days for this set.")
+          : "No solution is ticked, so the server count is zero. Team size and upgrade days still count if you left them filled.";
+        $("upNote").textContent = "Upgrades in this 5-year view: " + yearList(upYears) + ". Hardware refresh: " + yearList(refYears) + ".";
+
+        const headline = $("headline");
+        const feeNote = $("feeNote");
+        const rangeLine = $("rangeLine");
+        const beLine = $("beLine");
+        const buys = $("buys");
+        const saasLabel = $("saasLabel");
+
+        $("onpremOut").textContent = fmtMillion(main.onprem) + " (range " + fmtMillion(main.onprem * 0.8) + " – " + fmtMillion(main.onprem * 1.2) + ")";
+        $("saasOut").textContent = fmtMillion(main.saas) + " (range " + fmtMillion(main.saas * 0.8) + " – " + fmtMillion(main.saas * 1.2) + ")";
+
+        if (model.blank && model.feeStar == null) {
+          headline.textContent = "Even at a yearly fee of zero, SaaS still costs more over 5 years.";
+          feeNote.textContent = "The move, the months you run both, and year-1 contingency cost more than the servers and time you drop. This model does not find a break-even fee.";
+          saasLabel.textContent = "SaaS at a zero fee";
+          buys.hidden = true;
+        } else if (model.blank) {
+          headline.textContent = "SaaS breaks even at a yearly fee of about " + fmtThousand(model.feeStar) + ".";
+          feeNote.textContent = "That is not a price. It is the year-1 fee that makes the 5-year totals match. The fee then rises " + trimNum(state.si) + "% a year. Cautious to likely range (±20%): " + fmtThousand(model.feeStar * 0.8) + " – " + fmtThousand(model.feeStar * 1.2) + ".";
+          saasLabel.textContent = "SaaS at that fee";
+          buys.hidden = true;
+        } else if (main.onprem <= 0 && main.saas <= 0) {
+          headline.textContent = "Both 5-year totals are about zero with these numbers.";
+          feeNote.textContent = "Using your year-1 fee of " + fmtThousand(state.sub) + ", then " + trimNum(state.si) + "% higher each year.";
+          saasLabel.textContent = "SaaS, 5 years";
+          buys.hidden = true;
+        } else if (save > main.onprem * 0.005) {
+          const cautious = save * 0.8;
+          headline.textContent = "SaaS costs about " + fmtMillion(save) + " less over 5 years.";
+          feeNote.textContent = "Likely " + fmtMillion(save) + " less. Cautious case (20% smaller): about " + fmtMillion(cautious) + " less. Using your year-1 fee of " + fmtThousand(state.sub) + ", then " + trimNum(state.si) + "% higher each year.";
+          saasLabel.textContent = "SaaS, 5 years";
+          buys.hidden = true;
+        } else if (save < -main.onprem * 0.005) {
+          const extra = -save;
+          const pctBase = main.onprem > 0 ? Math.round((extra / main.onprem) * 100) : null;
+          const pctText = pctBase == null ? "more" : (pctBase < 1 ? "less than 1% more" : "about " + pctBase + "% more");
+          headline.textContent = pctBase == null
+            ? "SaaS costs more over 5 years. On-prem cost is zero in this setup, so a percent is not useful."
+            : "SaaS costs " + pctText + " over 5 years. Here is what that buys:";
+          const cautiousPct = main.onprem > 0 ? Math.round((extra * 1.2 / main.onprem) * 100) : null;
+          feeNote.textContent = "Likely about " + fmtMillion(extra) + " more." + (cautiousPct != null ? " Cautious case: about " + cautiousPct + "% more." : "") + " Using your year-1 fee of " + fmtThousand(state.sub) + ", then " + trimNum(state.si) + "% higher each year.";
+          saasLabel.textContent = "SaaS, 5 years";
+          buys.hidden = false;
+          $("buyUp").textContent = "Upgrades done for you. This model leaves your team with " + Math.round(100 - state.uc) + "% of the upgrade work.";
+        } else {
+          headline.textContent = "The 5-year totals are about the same.";
+          feeNote.textContent = "The gap is under 1% of the on-prem total. Using your year-1 fee of " + fmtThousand(state.sub) + ".";
+          saasLabel.textContent = "SaaS, 5 years";
+          buys.hidden = true;
+        }
+
+        const overlap = bandOverlap(main.onprem, main.saas);
+        if (model.blank && model.feeStar != null) {
+          rangeLine.textContent = "The two 5-year totals match because this fee was chosen to make them match. Each total can still move about 20% either way.";
+        } else if (overlap) {
+          rangeLine.textContent = "Each total has a ±20% range. Those ranges overlap, so treat a small gap as too close to call.";
+        } else {
+          rangeLine.textContent = "Each total has a ±20% range. Those ranges do not overlap, so the direction is clearer. Still an estimate.";
+        }
+
+        if (main.be == null) {
+          beLine.textContent = "SaaS does not cost less within 5 years (60 months).";
+        } else if (main.be === 1) {
+          beLine.textContent = "Break-even month: 1. SaaS costs less from the first month in this likely case.";
+        } else {
+          beLine.textContent = "Break-even month: " + main.be + ". That is the first month when the running SaaS total is at or below on-prem.";
+        }
+
+        $("chartNote").textContent = main.be
+          ? "Likely case. The gold line marks break-even, month " + main.be + "."
+          : "Likely case. No break-even month inside 5 years.";
+        $("stickyVal").textContent = headline.textContent;
+        $("stickySum").hidden = false;
+
+        const yearRows = [];
+        for (let y = 0; y < 5; y++) {
+          let o = 0;
+          let s = 0;
+          for (let m = 0; m < 12; m++) {
+            o += main.monthsO[y * 12 + m];
+            s += main.monthsS[y * 12 + m];
+          }
+          yearRows.push({ cells: ["Year " + (y + 1), fmtThousand(o), fmtThousand(s)] });
+        }
+        yearRows.push({ total: true, cells: ["5-year total", fmtThousand(main.onprem), fmtThousand(main.saas)] });
+        fillTable($("yearTable"), yearRows);
+
+        const p = main.parts;
+        const dash = "—";
+        fillTable($("partTable"), [
+          { cells: ["Servers, power, space, licences", fmtThousand(p.onInfra), fmtThousand(p.sInfra)] },
+          { cells: ["People", fmtThousand(p.onPeople), fmtThousand(p.sPeople)] },
+          { cells: ["Upgrades", fmtThousand(p.onUpgrade), fmtThousand(p.sUpgrade)] },
+          { cells: ["Hardware refresh", fmtThousand(p.onRefresh), fmtThousand(p.sRefresh)] },
+          { cells: ["Running both (" + trimNum(state.dual) + " months)", dash, fmtThousand(p.overlap)] },
+          { cells: ["One-time move", dash, fmtThousand(p.mig)] },
+          { cells: ["Year-1 contingency (" + trimNum(state.ctg) + "%)", dash, fmtThousand(p.cont)] },
+          { cells: ["Subscription", dash, fmtThousand(p.sub)] },
+          { total: true, cells: ["Total", fmtThousand(main.onprem), fmtThousand(main.saas)] }
+        ]);
+
+        const fteText = (Math.round(people.fte * 10) / 10).toFixed(1);
+        const opsText = (Math.round(people.fteOps * 10) / 10).toFixed(1);
+        $("fteLine").textContent = "After the move, about " + fteText + " FTE comes back (" + opsText + " FTE of daily platform work, plus lighter upgrades). Upgrade work over 5 years: " + Math.round(people.daysOn) + " person-days on-prem, about " + Math.round(people.daysSaas) + " with SaaS. For the first " + trimNum(state.dual) + " months both sides run, so little of this time comes back yet. This time is already inside the people cost above. It is not extra savings.";
+
+        const risk = $("riskList");
+        risk.textContent = "";
+        const outageAed = 100000 * FX;
+        const outageBig = 1000000 * FX;
+        const outageLine = state.cur === "usd"
+          ? "Uptime Institute, 2025: 54% of significant outages cost more than US$100,000, and about one in five cost more than US$1 million."
+          : "Uptime Institute, 2025: 54% of significant outages cost more than US$100,000 (about " + fmtThousand(outageAed) + "), and about one in five cost more than US$1 million (about " + fmtMillion(outageBig) + ").";
+        [
+          "Availability. Helix subscription services: 99.9% in a month. Planned maintenance is excluded. Your contract controls the real term.",
+          "Recovery. A 15-minute recovery point, and a 4-hour recovery time, unless your contract says otherwise.",
+          "Certifications. ISO 27001, and a yearly SOC 2 Type II examination, as BMC describes them for the subscription service.",
+          "Data location. For a UAE cloud subscription, backups are stored in Abu Dhabi (UAE Central). Data stays in the country you select. Confirm the site in your contract.",
+          outageLine + " This is industry background, not a Helix result, and it is not subtracted here."
+        ].forEach((text) => {
+          const li = document.createElement("li");
+          li.textContent = text;
+          risk.appendChild(li);
+        });
+
+        const names = { sm: "Service Management", ob: "Observability & AIOps", cm: "Discovery & CMDB", ai: "AI services" };
+        const chosen = state.sol.map((id) => names[id]).join(", ") || "None";
+        const rows = [
+          ["Currency", state.cur === "usd" ? "US$ (1 US$ = 3.6725 AED)" : "AED (1 US$ = 3.6725 AED)"],
+          ["Solutions", chosen],
+          ["Servers", String(servers) + " (" + state.sol.length + " × " + trimNum(state.srv) + ")"],
+          ["People (FTE)", trimNum(state.fte)],
+          ["Yearly cost per engineer", fmtThousand(state.eng)],
+          ["Upgrades", "Every " + trimNum(state.uy) + " years, " + trimNum(state.ud) + " person-days"],
+          ["Year-1 SaaS fee", state.sub == null ? "Blank (break-even fee " + (model.feeStar == null ? "not found" : fmtThousand(model.feeStar)) + ")" : fmtThousand(state.sub)]
+        ];
+        const printBody = $("printInputs");
+        printBody.textContent = "";
+        rows.forEach((pair) => {
+          const tr = document.createElement("tr");
+          pair.forEach((cell) => {
+            const td = document.createElement("td");
+            td.textContent = cell;
+            tr.appendChild(td);
+          });
+          printBody.appendChild(tr);
+        });
+        const method = document.querySelectorAll(".print-method li");
+        if (method.length >= 3) {
+          method[0].textContent = "On-prem costs rise " + trimNum(state.oi) + "% a year. The SaaS fee rises " + trimNum(state.si) + "% a year. Servers and people you still run rise at the on-prem rate.";
+          method[1].textContent = "With SaaS: " + trimNum(state.ic) + "% less infrastructure, " + trimNum(state.oc) + "% less ops effort, " + trimNum(state.uc) + "% less upgrade effort.";
+          method[2].textContent = "Year 1 adds a one-time move, " + trimNum(state.dual) + " months running both, and " + trimNum(state.ctg) + "% contingency.";
+        }
+        $("printDate").textContent = "Printed " + new Date().toISOString().slice(0, 10);
+        $("printUrl").textContent = LIVE;
+        drawQR($("printQR"));
+
+        const saasName = model.blank && model.feeStar != null ? "SaaS at the break-even fee" : "SaaS";
+        renderChart(main, saasName);
+        writeHash();
+      }
+
+      function trimNum(n) {
+        return String(Math.round(n * 1000) / 1000);
+      }
+
+      function boot() {
+        if (window.Chart) {
+          Chart.defaults.animation = false;
+          Chart.defaults.font.family = '"Source Sans 3", "Segoe UI", system-ui, sans-serif';
+          Chart.defaults.color = "#5b6b80";
+          if (Chart.defaults.transitions && Chart.defaults.transitions.active && Chart.defaults.transitions.active.animation) {
+            Chart.defaults.transitions.active.animation.duration = 0;
+          }
+        }
+        applying = true;
+        applyHash(parseHash());
+        writeForm();
+        applying = false;
+        hashReady = true;
+        render();
+      }
+
+      $("calcForm").addEventListener("submit", (e) => e.preventDefault());
+      $("calcForm").addEventListener("input", () => {
+        if (applying) return;
+        readForm();
+        render();
+      });
+      $("calcForm").addEventListener("focusout", (e) => {
+        if (!e.target || e.target.id === "sub") return;
+        if (e.target.tagName !== "INPUT") return;
+        writeForm();
+      });
+      document.querySelector(".sols").addEventListener("click", (e) => {
+        const btn = e.target.closest(".sol");
+        if (!btn) return;
+        const id = btn.dataset.sol;
+        const i = state.sol.indexOf(id);
+        if (i >= 0) state.sol.splice(i, 1);
+        else state.sol.push(id);
+        state.sol = SOL_IDS.filter((sid) => state.sol.indexOf(sid) >= 0);
+        paintSolutions();
+        render();
+      });
+      document.querySelector(".cur-toggle").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-cur]");
+        if (!btn || btn.dataset.cur === state.cur) return;
+        state.cur = btn.dataset.cur;
+        writeForm();
+        render();
+      });
+      $("copyLinkBtn").addEventListener("click", async () => {
+        writeHash();
+        const url = location.href;
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch (err) {
+          const ta = document.createElement("textarea");
+          ta.value = url;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+        }
+        $("linkCopied").hidden = false;
+        setTimeout(() => { $("linkCopied").hidden = true; }, 1600);
+      });
+      $("printBtn").addEventListener("click", () => {
+        drawQR($("printQR"));
+        if (chart) chart.resize();
+        window.print();
+      });
+      $("discMore").addEventListener("click", () => {
+        const bar = document.querySelector(".disclaimer");
+        const open = bar.classList.toggle("expanded");
+        $("discMore").textContent = open ? "less" : "more";
+        $("discMore").setAttribute("aria-expanded", String(open));
+      });
+      document.addEventListener("click", (e) => {
+        const tip = e.target.closest(".tip");
+        document.querySelectorAll(".tip.show").forEach((t) => {
+          if (t !== tip) t.classList.remove("show");
+        });
+        if (!tip) return;
+        e.preventDefault();
+        tip.classList.toggle("show");
+      });
+      window.addEventListener("hashchange", () => {
+        if (applying) return;
+        applying = true;
+        applyHash(parseHash());
+        writeForm();
+        applying = false;
+        render();
+      });
+      window.addEventListener("beforeprint", () => {
+        drawQR($("printQR"));
+        if (chart) chart.resize();
+      });
+      window.addEventListener("error", (e) => {
+        if (e && e.target && e.target.tagName === "SCRIPT") return;
+        if ($("fatal")) $("fatal").hidden = false;
+      });
+
+      boot();
+    })();
+  </script>
+</body>
+</html>
