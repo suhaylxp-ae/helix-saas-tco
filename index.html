@@ -264,6 +264,14 @@
     }
     .chart-box { position: relative; height: 250px; margin-top: 0.35rem; }
     .chart-print { display: none; }
+    #printChart {
+      position: fixed;
+      left: -2000px;
+      top: 0;
+      width: 1400px;
+      height: 210px;
+      pointer-events: none;
+    }
     .fine { font-size: 0.78rem; color: var(--muted); margin: 0.45rem 0 0; }
     .fte-card { border-left: 3px solid var(--good); }
     .fte-card strong { color: var(--good); }
@@ -375,31 +383,31 @@
       .disclaimer, .no-print, .sticky-sum, .actions, .about, footer, details.method, .disc-more, .cur-row, header .lede, header .eyebrow { display: none !important; }
       .layout { display: block; margin: 0; }
       .outputs { position: static !important; }
-      .card, .results-card, .risk { box-shadow: none; margin: 0 0 0.25rem; }
+      .card, .results-card, .risk { box-shadow: none; margin: 0 0 0.12rem; }
       .results-card {
         background: #fff;
         color: var(--navy);
         border: 1px solid var(--navy);
-        padding: 0.35rem 0.5rem;
+        padding: 0.2rem 0.45rem;
         border-radius: 8px;
       }
       .results-card h2, .headline, .range-line, .fee-note, .be-line, .people-note, .kpis span { color: var(--navy); }
-      .headline { font-size: 1rem; margin-bottom: 0.15rem; }
-      .range-line, .fee-note, .be-line, .people-note { font-size: 0.68rem; margin-bottom: 0.15rem; }
-      .kpis { margin: 0.1rem 0 0.2rem; gap: 0.25rem; }
+      .headline { font-size: 1rem; margin-bottom: 0.08rem; }
+      .range-line, .fee-note, .be-line, .people-note { font-size: 0.68rem; margin-bottom: 0.06rem; }
+      .kpis { margin: 0.05rem 0 0.08rem; gap: 0.25rem; }
       .kpis > div { background: #f5f7fb; padding: 0.2rem 0.35rem; }
       .kpis b { font-size: 0.75rem; }
       .buys { font-size: 0.68rem; }
       .buys li { margin: 0.05rem 0; }
-      #costChart { display: none !important; }
-      .chart-print { display: block !important; width: 100%; height: 72px; object-fit: contain; object-position: left center; }
-      .chart-box { height: 72px; overflow: hidden; }
+      #costChart, #printChart { display: none !important; }
+      .chart-print { display: block !important; width: 100%; height: auto; }
+      .chart-box { height: auto; overflow: visible; }
       .risk { margin-bottom: 0.1rem; padding: 0.15rem 0.35rem; }
       .print-foot { margin-top: 0; }
       .buys { margin: 0.05rem 0 0.1rem; }
       .buys li { margin: 0.02rem 0; }
       .table-card { display: none !important; }
-      .chart-card, .fte-card, .table-card, .risk { padding: 0.25rem 0.4rem; border-radius: 6px; }
+      .chart-card, .fte-card, .table-card, .risk { padding: 0.12rem 0.35rem; border-radius: 6px; }
       .fte-card p, .risk p, .risk li, .fine { font-size: 0.62rem; margin-top: 0.1rem; }
       .risk ul { margin-top: 0.1rem; }
       .risk li { margin: 0.04rem 0; }
@@ -529,6 +537,7 @@
           <canvas id="costChart" aria-label="Cumulative on-prem and SaaS cost over 60 months"></canvas>
           <img id="chartPrint" class="chart-print" alt="Cumulative on-prem and SaaS cost over 5 years" />
         </div>
+        <canvas id="printChart" width="1400" height="210" aria-hidden="true"></canvas>
         <p class="fine" id="chartFallback" hidden>The chart did not load. The totals above are still valid.</p>
       </section>
 
@@ -716,6 +725,8 @@
 
       let state = fresh();
       let chart = null;
+      let printChart = null;
+      let printSpec = null;
       let hashReady = false;
       let applying = false;
 
@@ -1113,64 +1124,64 @@
         }
       }
 
-      function renderChart(main, saasName, showBe) {
-        const canvas = $("costChart");
-        const fallback = $("chartFallback");
-        if (!window.Chart) {
-          fallback.hidden = false;
-          return;
-        }
-        fallback.hidden = true;
+      function makeChart(canvas, main, saasName, showBe, large) {
         const onData = main.cumO.map((y, i) => ({ x: i + 1, y: toDisp(y) }));
         const saasData = main.cumS.map((y, i) => ({ x: i + 1, y: toDisp(y) }));
         const axisMillion = Math.max.apply(null, main.cumO.concat(main.cumS).map(toDisp)) >= 1000000;
-        if (chart) chart.destroy();
-        chart = new Chart(canvas, {
+        const font = large ? 22 : 11;
+        const options = {
+          animation: false,
+          responsive: !large,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { position: "top", labels: { boxWidth: large ? 28 : 10, font: { size: font }, padding: large ? 18 : 8 } },
+            tooltip: {
+              callbacks: {
+                title: (items) => "Month " + items[0].parsed.x,
+                label: (item) => item.dataset.label + ": " + fmtThousand(state.cur === "usd" ? item.parsed.y * FX : item.parsed.y)
+              }
+            },
+            breakevenLine: { month: showBe ? main.be : null }
+          },
+          scales: {
+            x: {
+              type: "linear",
+              min: 0,
+              max: 60,
+              ticks: {
+                autoSkip: false,
+                maxRotation: 0,
+                stepSize: 12,
+                font: { size: font },
+                callback: (value) => {
+                  const v = Math.round(Number(value));
+                  return v > 0 && v % 12 === 0 ? "Year " + (v / 12) : "";
+                }
+              }
+            },
+            y: {
+              title: { display: true, text: axisMillion ? (state.cur === "usd" ? "US$ million" : "AED million") : prefix().trim(), font: { size: font } },
+              ticks: {
+                font: { size: font },
+                callback: (v) => axisMillion ? (v / 1000000).toFixed(1) : fmtAxis(v)
+              }
+            }
+          }
+        };
+        if (large) {
+          options.devicePixelRatio = 1;
+          options.layout = { padding: 12 };
+        }
+        return new Chart(canvas, {
           type: "line",
           data: {
             datasets: [
-              { label: "On-prem", data: onData, borderColor: "#0b1f3a", backgroundColor: "transparent", pointRadius: 0, borderWidth: 2, tension: 0 },
-              { label: saasName, data: saasData, borderColor: "#2f6fed", backgroundColor: "transparent", pointRadius: 0, borderWidth: 2, tension: 0 }
+              { label: "On-prem", data: onData, borderColor: "#0b1f3a", backgroundColor: "transparent", pointRadius: 0, borderWidth: large ? 4 : 2, tension: 0 },
+              { label: saasName, data: saasData, borderColor: "#2f6fed", backgroundColor: "transparent", pointRadius: 0, borderWidth: large ? 4 : 2, tension: 0 }
             ]
           },
-          options: {
-            animation: false,
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: "index", intersect: false },
-            plugins: {
-              legend: { position: "top", labels: { boxWidth: 10, font: { size: 11 }, padding: 8 } },
-              tooltip: {
-                callbacks: {
-                  title: (items) => "Month " + items[0].parsed.x,
-                  label: (item) => item.dataset.label + ": " + fmtThousand(state.cur === "usd" ? item.parsed.y * FX : item.parsed.y)
-                }
-              },
-              breakevenLine: { month: showBe ? main.be : null }
-            },
-            scales: {
-              x: {
-                type: "linear",
-                min: 0,
-                max: 60,
-                ticks: {
-                  autoSkip: false,
-                  maxRotation: 0,
-                  stepSize: 12,
-                  callback: (value) => {
-                    const v = Math.round(Number(value));
-                    return v > 0 && v % 12 === 0 ? "Year " + (v / 12) : "";
-                  }
-                }
-              },
-              y: {
-                title: { display: true, text: axisMillion ? (state.cur === "usd" ? "US$ million" : "AED million") : prefix().trim(), font: { size: 11 } },
-                ticks: {
-                  callback: (v) => axisMillion ? (v / 1000000).toFixed(1) : fmtAxis(v)
-                }
-              }
-            }
-          },
+          options: options,
           plugins: [{
             id: "breakevenLine",
             afterDraw: function (c, args, opts) {
@@ -1182,9 +1193,9 @@
               const g = c.ctx;
               g.save();
               g.beginPath();
-              g.setLineDash([4, 3]);
+              g.setLineDash(large ? [10, 8] : [4, 3]);
               g.strokeStyle = "#c4a35a";
-              g.lineWidth = 1.5;
+              g.lineWidth = large ? 3 : 1.5;
               g.moveTo(x, yScale.top);
               g.lineTo(x, yScale.bottom);
               g.stroke();
@@ -1192,14 +1203,33 @@
             }
           }]
         });
+      }
+
+      function renderChart(main, saasName, showBe) {
+        const canvas = $("costChart");
+        const fallback = $("chartFallback");
+        if (!window.Chart) {
+          fallback.hidden = false;
+          return;
+        }
+        fallback.hidden = true;
+        if (chart) chart.destroy();
+        chart = makeChart(canvas, main, saasName, showBe, false);
+        printSpec = { main: main, saasName: saasName, showBe: showBe };
         paintPrintChart();
       }
 
       function paintPrintChart() {
+        const canvas = $("printChart");
         const img = $("chartPrint");
-        if (!chart || !img) return;
+        if (!printSpec || !canvas || !img || !window.Chart) return;
+        if (canvas.clientWidth < 100) return;
+        canvas.width = 1400;
+        canvas.height = 210;
+        if (printChart) printChart.destroy();
+        printChart = makeChart(canvas, printSpec.main, printSpec.saasName, printSpec.showBe, true);
         try {
-          const url = chart.canvas.toDataURL("image/png");
+          const url = printChart.canvas.toDataURL("image/png");
           if (url && url.length > 32) img.src = url;
         } catch (e) {}
       }
@@ -1228,6 +1258,13 @@
         $("onpremOut").textContent = fmtMillion(main.onprem) + " (range " + fmtMillion(main.onprem * 0.8) + " – " + fmtMillion(main.onprem * 1.2) + ")";
         $("saasOut").textContent = fmtMillion(main.saas) + " (range " + fmtMillion(main.saas * 0.8) + " – " + fmtMillion(main.saas * 1.2) + ")";
 
+        const band = Math.abs(main.onprem) * 0.2;
+        const gapLow = save - band;
+        const gapHigh = save + band;
+        const gapCrosses = gapLow < -0.5 && gapHigh > 0.5;
+        const smallGap = main.onprem > 0 && Math.abs(save) < main.onprem * 0.05;
+        const tooClose = !model.blank && (gapCrosses || smallGap);
+
         if (model.blank && model.feeStar == null) {
           headline.textContent = "Even at a yearly fee of zero, SaaS still costs more over 5 years.";
           feeNote.textContent = "The move, the months you run both, and year-1 contingency cost more than the servers and time you drop. This model does not find a break-even fee.";
@@ -1241,6 +1278,12 @@
         } else if (main.onprem <= 0 && main.saas <= 0) {
           headline.textContent = "Both 5-year totals are about zero with these numbers.";
           feeNote.textContent = "Using your year-1 fee of " + fmtThousand(state.sub) + ", then " + trimNum(state.si) + "% higher each year.";
+          saasLabel.textContent = "SaaS, 5 years";
+          buys.hidden = true;
+        } else if (tooClose) {
+          const gapWay = save >= 0 ? "less" : "more";
+          headline.textContent = "Too close to call.";
+          feeNote.textContent = "Too close to call. The gap is about " + fmtMillion(Math.abs(save)) + " " + gapWay + " with SaaS" + (smallGap ? ", under 5% of the on-prem total" : "") + ". Gap ± 20% of the on-prem total crosses zero. Using your year-1 fee of " + fmtThousand(state.sub) + ", then " + trimNum(state.si) + "% higher each year.";
           saasLabel.textContent = "SaaS, 5 years";
           buys.hidden = true;
         } else if (save > main.onprem * 0.005) {
@@ -1270,20 +1313,15 @@
 
         if (model.blank && model.feeStar != null) {
           rangeLine.textContent = "The two 5-year totals match because this fee was chosen to make them match. Each total can still move about 20% either way.";
+        } else if (tooClose) {
+          rangeLine.textContent = "Too close to call. Gap ± 20% of the on-prem total runs from about " + fmtMillion(-gapLow) + " more with SaaS to about " + fmtMillion(gapHigh) + " less.";
+        } else if (save > 0) {
+          rangeLine.textContent = "The 5-year difference is about " + fmtMillion(save) + " less with SaaS. Gap ± 20% of the on-prem total is " + fmtMillion(gapLow) + " to " + fmtMillion(gapHigh) + " less.";
         } else {
-          const low = save - Math.abs(save) * 0.2;
-          const high = save + Math.abs(save) * 0.2;
-          const crosses = low < -0.5 && high > 0.5;
-          if (crosses || Math.abs(save) < 0.5) {
-            rangeLine.textContent = "The 5-year difference is about zero. A ±20% range on that difference crosses zero. Too close to call.";
-          } else if (save > 0) {
-            rangeLine.textContent = "The 5-year difference is about " + fmtMillion(save) + " less with SaaS. A ±20% range on that difference is " + fmtMillion(low) + " to " + fmtMillion(high) + " less.";
-          } else {
-            rangeLine.textContent = "The 5-year difference is about " + fmtMillion(-save) + " more with SaaS. A ±20% range on that difference is " + fmtMillion(-high) + " to " + fmtMillion(-low) + " more.";
-          }
+          rangeLine.textContent = "The 5-year difference is about " + fmtMillion(-save) + " more with SaaS. Gap ± 20% of the on-prem total is " + fmtMillion(-gapHigh) + " to " + fmtMillion(-gapLow) + " more.";
         }
 
-        if (model.blank) {
+        if (model.blank || tooClose) {
           beLine.hidden = true;
           beLine.textContent = "";
         } else if (main.be == null) {
@@ -1297,7 +1335,9 @@
           beLine.textContent = "Break-even month: " + main.be + ". That is the first month when the running SaaS total is at or below on-prem.";
         }
 
-        if (model.blank) {
+        if (tooClose) {
+          $("chartNote").textContent = "Likely case. Too close to call.";
+        } else if (model.blank) {
           $("chartNote").textContent = model.feeStar == null
             ? "Likely case. No fee makes SaaS cheaper inside 5 years."
             : "Likely case. The fee is set so the two 5-year totals match.";
@@ -1397,7 +1437,7 @@
         drawQR($("printQR"));
 
         const saasName = model.blank && model.feeStar != null ? "SaaS at the break-even fee" : "SaaS";
-        renderChart(main, saasName, !model.blank);
+        renderChart(main, saasName, !model.blank && !tooClose);
         writeHash();
       }
 
